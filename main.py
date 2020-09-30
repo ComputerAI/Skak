@@ -1,6 +1,6 @@
 """
 Library install with pip
-pip install chess-python
+pip install python-chess
 pip install PyQt5
 
 """
