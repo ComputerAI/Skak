@@ -1,3 +1,11 @@
+"""
+Library install with pip
+pip install chess-python
+pip install PyQt5
+
+"""
+
+
 import chess
 import chess.svg
 
