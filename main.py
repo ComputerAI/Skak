@@ -1,4 +1,5 @@
-
+import chess
+import chess.svg
 
 class Game:
     #TODO: Add game logic here
@@ -12,6 +13,7 @@ class Board:
 
 
 
+
 class Piece: 
     #TODO: Add piece fields
     print("Piece")
@@ -21,4 +23,5 @@ class Piece:
 
 if __name__ == "__main__":
     #TODO: Call game logic and start new game
-    print("Main")
+    board = chess.Board()
+    print(board)
