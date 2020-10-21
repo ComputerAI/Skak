@@ -8,74 +8,69 @@ pip install PyQt5
 
 import chess
 import chess.svg
+import time
 
 def evaluate():
     print("Evaluating board")
 
-def alphabeta(alpha, beta):
-    print("Running AlphaBeta algorithm")
 
-'''
-import copy #for stack implementation, make Game a global variable, and delete the copy.
-import time
+
 c=0
 
+def score(player,depth):
+    return 0
 
-def alphabeta(Game, alpha, beta, depth, p):
+def alphabeta(alpha, beta, depth, player):
     global c
     c += 1
-    if depth == 0 or Game.done(): return Game.score(p, depth)
-    if Game.turn == p:
+    if depth == 0 or board.is_game_over: return score(player, depth)
+    if board.turn == player:
         a=alpha
-        for val in T.valid(Game.board):
+        for val in list(board.legal_moves):
             if a>=beta: break
-            g = copy.deepcopy(Game)
-            g.move(val)
-            if T.won(g.board): return 100+depth
-            v=alphabeta(g,a,beta,depth-1, p)
+            board.push_san(val)
+            v=alphabeta(a,beta,depth-1, player)
             a = max(v,a)
+            board.pop()
         return a
     else:
         b=beta
-        for val in T.valid(Game.board):
+        for val in list(board.legal_moves):
             if alpha>=b: break
-            g = copy.deepcopy(Game)
-            g.move(val)
-            v=alphabeta(g,alpha,b,depth-1, p)
+            board.push_san(val)
+            v=alphabeta(alpha,b,depth-1, player)
             b = min(v,b)
+            board.pop()
         return b
 
 
-def ab(Game, depth, p):
+def ab(depth, player):
     a=-1000
     b=-a
-    poss=T.valid(Game.board)
+    poss=list(board.legal_moves)
     if not poss: return -1
     mov=poss[0]
+    print(poss[0])
     for val in poss:
-        g = copy.deepcopy(Game)
-        g.move(val)
-        v = alphabeta(g, a, b, depth - 1, p)
+        board.push_san(val)
+        v = alphabeta(a, b, depth - 1, player)
         #print(v,val)
         if a < v:
             a=v
             mov=val
-    global c
-    #print(c)
-    c=0
     return mov
 
-
-def play(Game, p):
-    if p is 'X': E='O'
+'''
+def play(Game, player):
+    if player is 'X': E='O'
     else: E = 'X'
     while not Game.done():
-        if Game.turn == p:
+        if Game.turn == player:
             T.printBoard(Game.board)
             Game.move(input("Your move"))
         else: Game.move(ab(Game, 9, E))
     if T.won(Game.board):
-        if Game.turn != p: print(f"Player {p} Wins")
+        if Game.turn != player: print(f"Player {player} Wins")
         else: print(f"Player {E} Wins")
     else: print("It was a tie")
 '''
@@ -83,6 +78,8 @@ def play(Game, p):
 
 if __name__ == "__main__":
     board = chess.Board()
-    print(board)
-    evaluate()
-    alphabeta(1,2)
+    
+    legalMoves = list(board.legal_moves)
+    #board.push(legalMoves[0])
+    print(legalMoves[0])
+    print(ab(1,True))
