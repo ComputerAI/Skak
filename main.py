@@ -28,7 +28,7 @@ def alphabeta(alpha, beta, depth, player):
         a=alpha
         for val in list(board.legal_moves):
             if a>=beta: break
-            board.push_san(val)
+            board.push(val)
             v=alphabeta(a,beta,depth-1, player)
             a = max(v,a)
             board.pop()
@@ -37,7 +37,7 @@ def alphabeta(alpha, beta, depth, player):
         b=beta
         for val in list(board.legal_moves):
             if alpha>=b: break
-            board.push_san(val)
+            board.push(val)
             v=alphabeta(alpha,b,depth-1, player)
             b = min(v,b)
             board.pop()
@@ -52,8 +52,9 @@ def ab(depth, player):
     mov=poss[0]
     print(poss[0])
     for val in poss:
-        board.push_san(val)
+        board.push(val)
         v = alphabeta(a, b, depth - 1, player)
+        
         #print(v,val)
         if a < v:
             a=v
