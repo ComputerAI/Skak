@@ -18,12 +18,12 @@ def evaluate():
 c=0
 
 def score(player,depth):
+    global c
+    c += 1
     return 0
 
 def alphabeta(alpha, beta, depth, player):
-    global c
-    c += 1
-    if depth == 0 or board.is_game_over: return score(player, depth)
+    if depth == 0 or board.is_game_over(): return score(player, depth)
     if board.turn == player:
         a=alpha
         for val in list(board.legal_moves):
@@ -50,11 +50,10 @@ def ab(depth, player):
     poss=list(board.legal_moves)
     if not poss: return -1
     mov=poss[0]
-    print(poss[0])
     for val in poss:
         board.push(val)
         v = alphabeta(a, b, depth - 1, player)
-        
+        board.pop()
         #print(v,val)
         if a < v:
             a=v
@@ -79,8 +78,7 @@ def play(Game, player):
 
 if __name__ == "__main__":
     board = chess.Board()
-    
-    legalMoves = list(board.legal_moves)
-    #board.push(legalMoves[0])
-    print(legalMoves[0])
-    print(ab(1,True))
+    board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
+    print(ab(6,True))
+    print(c)
+    print(board.is_game_over())
