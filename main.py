@@ -16,7 +16,6 @@ def evaluate():
 
 
 c=0
-
 def score(player,depth):
     global c
     c += 1
@@ -26,18 +25,23 @@ def score(player,depth):
     bishop = 3.33       #3
     rook = 5.63         #4
     queen = 9.5         #5
-    king = 200          #6
+    king = 20000          #6
     pieces = [0,pawn,knight,bishop,rook,queen,king]
 
-    mul = 1
-    color = player
-    diff = 0
-    for _ in range(2):
-        for j in range(1,7):
-            diff += mul*len(board.pieces(j,color))*pieces[j]
-        color = not color
-        mul = -1
+    diff = 0    
+    for j in range(1,7):                                        #Go through each piece type
+        for i in board.pieces(j,player):                        #Your piecec are goooood
+            diff += pieces[j]*len(board.attacks(i))+pieces[j]
+        for i in board.pieces(j,not player):                    #Enemy pieces not so much
+            diff -= pieces[j]*len(board.attacks(i))+pieces[j]
+        #diff += len(board.pieces(j,player))*pieces[j]
+        #diff -= len(board.pieces(j,not player))*pieces[j]
     
+    #If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
+    if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff*=-king
+    elif board.is_checkmate():
+        if board.turn is player: diff*=-king
+        if board.turn is not player: diff*=king
     return diff
 
 def alphabeta(alpha, beta, depth, player):
@@ -110,5 +114,9 @@ if __name__ == "__main__":
     board = chess.Board()
     #board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
     #print(ab(6,True))
-    autoplay(3)
+    autoplay(4)
+    print(board.is_insufficient_material())
+    print(board.is_stalemate())
+    print(board.is_fivefold_repetition())
+    print(board.is_seventyfive_moves())
     print(c)
