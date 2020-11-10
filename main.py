@@ -5,14 +5,27 @@ pip install PyQt5
 
 """
 
-
 import chess
-import chess.svg
 import time
+import scoreboard
 
-def evaluate():
-    print("Evaluating board")
+ListOfScoreBoards = scoreboard.getScoreBoards() #Get scoreboards for black and white pieces
 
+def squareValueForPiece(piece):
+    print("Evalulating square value for ", piece)
+
+def findmove(): #Find available moves in sorted order
+    # Sort order:
+    # Start with last best moves follow up
+    # Prioritize capture of last moved piece
+    # Killer moves: capture threatining pieces
+    # Other captures: if you can capture do it
+    # Pawn promotion: try to promte pawn
+    # Castling
+    # All other moves
+    # En passant
+
+    return list(board.legal_moves)
 
 
 c=0
@@ -25,9 +38,9 @@ def score(player,depth):
     bishop = 3.33       #3
     rook = 5.63         #4
     queen = 9.5         #5
-    king = 20000          #6
+    king = 20000        #6
     pieces = [0,pawn,knight,bishop,rook,queen,king]
-
+    
     diff = 0    
     for j in range(1,7):                                        #Go through each piece type
         for i in board.pieces(j,player):                        #Your piecec are goooood
@@ -48,7 +61,7 @@ def alphabeta(alpha, beta, depth, player):
     if depth == 0 or board.is_game_over(): return score(player, depth)
     if board.turn == player:
         a=alpha
-        for val in list(board.legal_moves):
+        for val in findmove():
             if a>=beta: break
             board.push(val)
             v=alphabeta(a,beta,depth-1, player)
@@ -57,7 +70,7 @@ def alphabeta(alpha, beta, depth, player):
         return a
     else:
         b=beta
-        for val in list(board.legal_moves):
+        for val in findmove():
             if alpha>=b: break
             board.push(val)
             v=alphabeta(alpha,b,depth-1, player)
@@ -69,7 +82,7 @@ def alphabeta(alpha, beta, depth, player):
 def ab(depth, player):
     a=-1000
     b=-a
-    poss=list(board.legal_moves)
+    poss=findmove()
     if not poss: return -1
     mov=poss[0]
     for val in poss:
@@ -104,8 +117,8 @@ def autoplay(depth):
         else: board.push(ab(depth, False))
         print(board.unicode(),'\n')
     if not board.is_stalemate():
-        if board.turn: print(f"Player white Wins")
-        else: print(f"Player black Wins")
+        if board.turn: print("Player white Wins")
+        else: print("Player black Wins")
     else: print("It was a tie")
 #'''
 
@@ -113,6 +126,7 @@ def autoplay(depth):
 if __name__ == "__main__":
     board = chess.Board()
     #board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
+    board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNp")
     #print(ab(6,True))
     autoplay(4)
     print(board.is_insufficient_material())
@@ -120,3 +134,6 @@ if __name__ == "__main__":
     print(board.is_fivefold_repetition())
     print(board.is_seventyfive_moves())
     print(c)
+
+    #BITBOARDS
+    bitboard = board.transform()
