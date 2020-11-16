@@ -5,14 +5,23 @@ pip install PyQt5
 
 """
 
-
 import chess
-import chess.svg
 import time
 
-def evaluate():
-    print("Evaluating board")
+def squareValueForPiece(piece):
+    print("Evalulating square value for ", piece)
 
+def findmove():
+    # Sort order:
+    # Start with last best moves follow up
+    # Prioritize capture of last moved piece
+    # Killer moves: capture threatining pieces
+    # Other captures: if you can capture do it
+    # Pawn promotion: try to promte pawn
+    # Castling
+    # All other moves
+    # En passant
+    return list(board.legal_moves)
 
 
 c=0
@@ -25,14 +34,14 @@ def score(player,depth):
     bishop = 3.33       #3
     rook = 5.63         #4
     queen = 9.5         #5
-    king = 20000          #6
-    pieces = [0,pawn,knight,bishop,rook,queen,king]
-
+    king = 20000        #6
+    pieces = [pawn,knight,bishop,rook,queen,king]
+    
     diff = 0    
-    for j in range(1,7):                                        #Go through each piece type
-        for i in board.pieces(j,player):                        #Your piecec are goooood
+    for j in range(6):                                        #Go through each piece type
+        for i in board.pieces(j+1,player):                        #Your piecec are goooood
             diff += pieces[j]*len(board.attacks(i))+pieces[j]
-        for i in board.pieces(j,not player):                    #Enemy pieces not so much
+        for i in board.pieces(j+1,not player):                    #Enemy pieces not so much
             diff -= pieces[j]*len(board.attacks(i))+pieces[j]
         #diff += len(board.pieces(j,player))*pieces[j]
         #diff -= len(board.pieces(j,not player))*pieces[j]
@@ -48,8 +57,8 @@ def alphabeta(alpha, beta, depth, player):
     if depth == 0 or board.is_game_over(): return score(player, depth)
     if board.turn == player:
         a=alpha
-        for val in list(board.legal_moves):
-            if a>=beta: break
+        for val in findmove():
+            #if a>=beta: break
             board.push(val)
             v=alphabeta(a,beta,depth-1, player)
             a = max(v,a)
@@ -57,8 +66,8 @@ def alphabeta(alpha, beta, depth, player):
         return a
     else:
         b=beta
-        for val in list(board.legal_moves):
-            if alpha>=b: break
+        for val in findmove():
+            #if alpha>=b: break
             board.push(val)
             v=alphabeta(alpha,b,depth-1, player)
             b = min(v,b)
@@ -69,7 +78,7 @@ def alphabeta(alpha, beta, depth, player):
 def ab(depth, player):
     a=-1000
     b=-a
-    poss=list(board.legal_moves)
+    poss=findmove()
     if not poss: return -1
     mov=poss[0]
     for val in poss:
@@ -104,8 +113,8 @@ def autoplay(depth):
         else: board.push(ab(depth, False))
         print(board.unicode(),'\n')
     if not board.is_stalemate():
-        if board.turn: print(f"Player white Wins")
-        else: print(f"Player black Wins")
+        if board.turn: print("Player white Wins")
+        else: print("Player black Wins")
     else: print("It was a tie")
 #'''
 
