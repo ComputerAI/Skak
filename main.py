@@ -7,11 +7,14 @@ pip install PyQt5
 
 import chess
 import time
+import scoreboard
+
+ListOfScoreBoards = scoreboard.getScoreBoards() #Get scoreboards for black and white pieces
 
 def squareValueForPiece(piece):
     print("Evalulating square value for ", piece)
 
-def findmove():
+def findmove(): #Find available moves in sorted order
     # Sort order:
     # Start with last best moves follow up
     # Prioritize capture of last moved piece
@@ -21,6 +24,7 @@ def findmove():
     # Castling
     # All other moves
     # En passant
+
     return list(board.legal_moves)
 
 
@@ -58,7 +62,7 @@ def alphabeta(alpha, beta, depth, player):
     if board.turn == player:
         a=alpha
         for val in findmove():
-            #if a>=beta: break
+            if a>=beta: break
             board.push(val)
             v=alphabeta(a,beta,depth-1, player)
             a = max(v,a)
@@ -67,7 +71,7 @@ def alphabeta(alpha, beta, depth, player):
     else:
         b=beta
         for val in findmove():
-            #if alpha>=b: break
+            if alpha>=b: break
             board.push(val)
             v=alphabeta(alpha,b,depth-1, player)
             b = min(v,b)
@@ -122,6 +126,7 @@ def autoplay(depth):
 if __name__ == "__main__":
     board = chess.Board()
     #board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
+    board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNp")
     #print(ab(6,True))
     autoplay(4)
     print(board.is_insufficient_material())
@@ -129,3 +134,6 @@ if __name__ == "__main__":
     print(board.is_fivefold_repetition())
     print(board.is_seventyfive_moves())
     print(c)
+
+    #BITBOARDS
+    #bitboard = board.transform()
