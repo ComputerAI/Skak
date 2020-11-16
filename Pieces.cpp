@@ -1,58 +1,44 @@
 //
 // Created by Johannes on 16/10/2020.
 //
+#include "Pawn.cpp"
+#include "Rook.cpp"
+#include "Knight.cpp"
+#include "Bishop.cpp"
+#include "Queen.cpp"
+#include "King.cpp"
 #include <bits/stdc++.h>
 using namespace std;
-class Pieces{
-    public:
-    int team;
-    int score;
-    int place;
-    int origin;
-    char type;
 
-    virtual vector<int> available(Pieces board[]){
-        vector<int> res;
-        return res;
-    };
-};
-
-class empty : public Pieces{
-public:
-    empty(){
-        team = 0;
-        score = 0;
-        type='0';
-    }
-};
-
-class pawn : public Pieces{
-    int in[3]{0,1,-1};
-    public:
-    pawn(int t, int p){
-    team = t;
-    score = 1;
-    place = p;
-    origin = p;
-    type = 'P';
-    }
-    vector<int> available(Pieces board[]) override{
-        vector<int> res;
-        if(place+8*in[team]>=8*8 or place+8*in[team]<0) return res;
-        int enemy;
-        if (team==1) {
-            enemy = 2;
-            if(place>8*7) res.push_back(-1);
-        } else {
-            enemy = 1;
-            if(place<8) res.push_back(-1);
+vector<int> ava(int board[], const vector<int>& alive) {
+    vector<int> res;
+    for (int pos : alive) {
+        int piece = board[pos];
+        vector<int> temp;
+        switch (piece % 7) {
+            case 1:
+                temp = Pawn::available(board, {pos, piece});
+                break;
+            case 2:
+                temp = Rook::available(board, {pos, piece});
+                break;
+            case 3:
+                temp = Knight::available(board, {pos, piece});
+                break;
+            case 4:
+                temp = Bishop::available(board, {pos, piece});
+                break;
+            case 5:
+                temp = Queen::available(board, {pos, piece});
+                break;
+            case 6:
+                temp = King::available(board, {pos, piece});
+                break;
         }
-        if(board[place+7*in[team]].team==enemy) res.push_back(place+7*in[team]);
-        if(board[place+9*in[team]].team==enemy) res.push_back(place+9*in[team]);
-        if(board[place+8*in[team]].team!=team){
-            res.push_back(place+8*in[team]);
-            if(origin == place and board[place+16*in[team]].team!=team) res.push_back(place+16*in[team]);
+        for (int j:temp) {
+            res.push_back(j);
+            res.push_back(pos);
         }
-        return res;
     }
-};
+    return res;
+}

@@ -4,58 +4,52 @@
 #include <bits/stdc++.h>
 #include "Game.cpp"
 using namespace std;
-int cc=0;
-Game g = Game();
-/*
+Game g;
 int alphabeta(int depth, bool p, int alpha, int beta){
-    cc+=1;
-    if(depth==0 || g.done()) return g.score(p, depth);
-    int *poss=g.available();
+    vector<int> poss = g.available(g.get(g.turn));
+    if(depth==0 || poss.empty()) return g.score(p, depth);
     if(g.turn==p){
         int a = alpha;
-        for (int i = 0; i < 9 && poss[i]!=-1; i++) {
+        for (int i = 0; i < poss.size(); i+=2) {
             //if(a>=beta) break;
-            g.move(poss[i]);
+            g.move(poss[i],poss[i+1]);
             int v = alphabeta(depth - 1, p, a, beta);
             a=max(v,a);
             g.pop();
         }
-        delete[](poss);
         return a;
     } else{
         int b = beta;
-        for (int i = 0; i < 9 && poss[i]!=-1; i++) {
+        for (int i = 0; i < poss.size(); i+=2) {
             //if(b<=alpha) break;
-            g.move(poss[i]);
+            g.move(poss[i],poss[i+1]);
             int v = alphabeta(depth - 1, p, alpha, b);
             b=min(v,b);
             g.pop();
         }
-        delete[](poss);
         return b;
     }
 }
 
-int ab(int depth, bool p){
+vector<int> ab(int depth, bool p){
     int a=-1000;
     int b=-a;
-    int* poss = g.available();
+    vector<int> poss = g.available(g.get(p));
     int mov = poss[0];
-#pragma omp parallel for num_threads(4)
-    for (int i = 0; i < 9 && poss[i]!=-1; i++) {
-        g.move(poss[i]);
+    int pos = poss[1];
+    for (int i = 0; i < poss.size(); i+=2) {
+        g.move(poss[i],poss[i+1]);
         int v = alphabeta(depth-1,p,a,b);
         g.pop();
         if(a<v){
             a=v;
             mov=poss[i];
-        }//
+            pos=poss[i+1];
+        }
     }
-    //cout << cc;
-    cc=0;
-    return mov;
+    return {mov,pos};
 }
-
+/*
 void play(bool p){
     while (!g.done()){
         if(p==g.turn){
@@ -70,30 +64,26 @@ void play(bool p){
     else if(g.done()==2) cout << "Player 2 won!";
     else cout << "It's a tie!";
 }
-
 //*/
-
+void play(){
+    //while (!g.done()){
+    for (int i = 0; i < 2; i++) {
+        vector<int> move;
+        cout << g.available(g.get(g.turn)).size()/2 << endl;
+        move = ab(4, g.turn);
+        g.move(move[0],move[1]);
+        //g.show();
+        cout << g.cc << endl;
+    }
+}
 
 int main(){
-    pawn p =pawn(2,0);
-    cout << p.available(*g.board)[0] << endl;
-    cout << g.board[8]->team;
-    cout << g.board[0]->team;
-    //g.move(8,0);
-    cout << g.board[8]->team;
-    cout << g.board[0]->team << endl;
-    vector<int> a = g.board[8*7-1]->available(*g.board);
-    for (int i : a) {
-        cout << i << endl;
-    }//*/
-    g.show();
-    vector<int> n = g.available(g.get(1));
-    for (int j = 0; j < n.size(); j+=2) {
-        cout << n[j] << ' ';
-        cout << n[j+1] << endl;
-    }
-    cout << g.score(1) << ' ' << g.score(2);
-
+    g = Game();
+    auto start_time = std::chrono::high_resolution_clock::now();
+    play();
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto time = end_time - start_time;
+    cout << time/std::chrono::milliseconds(1);
 }
 
 

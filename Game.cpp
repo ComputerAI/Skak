@@ -6,69 +6,76 @@
 using namespace std;
 class Game{
     public:
-    Pieces** board = new Pieces*[8*8];
-    bool turn = true;
-    //stack <int[2]> s;
-    //vector<unique_ptr<Pieces>> bb;
+    int board[8*8] = {2,3,4,5,6,4,3,2,
+                       1,1,1,1,1,1,1,1,
+                       0,0,0,0,0,0,0,0,
+                       0,0,0,0,0,0,0,0,
+                       0,0,0,0,0,0,0,0,
+                       0,0,0,0,0,0,0,0,
+                       8,8,8,8,8,8,8,8,
+                       9,10,11,12,13,11,10,9};
+    bool turn = false;
+    stack <vector<int>> s;
+    int cc=0;
+    Game()= default;
 
-    //TODO add all pieces
-    Game(){
-        for (int i = 0; i < 8; i++) {
-            board[i]=new empty();
-            board[8+i]=new pawn(1,8+i);
-        }
-        for (int i = 0; i < 8; i++) {
-            board[8*7+i]=new empty();
-            board[8*6+i]=new pawn(2,8*6+i);
-        }
-        for (int j = 8*2; j < 8*6; j++) {
-            board[j]=new empty();
-        }
-
+    void move(int y, int x){
+        s.push({abs(y),x,board[abs(y)],board[x]});
+        turn=!turn;
+        int p = board[x];
+        if (y<=0 and p%7==1) p+=4;
+        board[x] = 0;
+        board[abs(y)]=p;
     }
 
-    void move(int x, int y){
-        //s.push({x,y});
-        Pieces* p = board[x];
-        board[x]=new empty();
-        //if(board[y]->team!=0) s.push(-board[y]->team,board[y]->type);
-        board[y]=p;
-        p->place=y;
+    void pop(){
+        vector<int> move = s.top();
+        s.pop();
+        turn=!turn;
+        board[move[0]]=move[2];
+        board[move[1]]=move[3];
     }
 
-    vector<Pieces*> get(int team){
-        vector<Pieces*> res;
+    vector<int> available(const vector<int>& alive){
+        return ava(board,alive);
+    }
+
+    //Return alive team
+    vector<int> get(int team){
+        vector<int> res;
         for (int i = 0; i < 8*8; i++) {
-            if (board[i]->team==team) res.push_back(board[i]);
+            if (board[i]==0) continue;
+            if (board[i]/7==team) {
+                res.push_back(i);
+                //res.push_back(board[i]);
+            }
         }
         return res;
     }
 
-    vector <int> available(const vector<Pieces*>& alive){
-        vector<int> s;
-        for (Pieces *p : alive){
-            vector<int> temp = p->available(*board);
-            for (int k : temp){
-                s.push_back(p->place);
-                s.push_back(k);
-            }
-        }
-        return s;
-    }
+    void showava(int pos){
+        char bb[8*8] = {};
+        for (int i:available({pos})) bb[abs(i)]='B';
+        bb[pos]='A';
+        for (int i = 7; i >= 0; i--) {
+            cout << '|';
+            for (int j = 0; j < 8; j++) {
+                if (bb[i*8+j]!='A' and bb[i*8+j]!='B'){
+                    if (board[i*8+j]==0) cout << " " << "--" << " |";
+                    else cout << board[i*8+j]%7 << "(" << board[i*8+j]/7 << ")|";
+                }
+                else if (board[i*8+j]==0) cout << "-" << "(" << bb[i*8+j] << ")|";
+                else cout << board[i*8+j]%7 << "(" << bb[i*8+j] << ")|";
 
-    //TODO return 0 if not done, -1 if stalemate and team if won
-    int done(){
-        return 0;
+            }
+            cout << endl;
+        }
     }
 
     //TODO return full score of current player
-    int score(int team){
-        int score=0;
-        for (int i = 0; i < 8*8; i++) {
-            if (board[i]->team==team) score+=board[i]->score;
-            else score-=board[i]->score;
-        }
-        return score;
+    int score(int team, int depth){
+        cc++;
+        return 0+depth;
     }
 
 
@@ -77,7 +84,8 @@ class Game{
         for (int i = n-1; i >= 0; i--) {
             cout << '|';
             for (int j = 0; j < n; j++) {
-                cout << board[i*n+j]->type << "(" << board[i*n+j]->team << ")|";
+                if (board[i*n+j]==0) cout << " " << "--" << " |";
+                else cout << board[i*n+j]%7 << "(" << board[i*n+j]/7 << ")|";
             }
             cout << endl;
         }
