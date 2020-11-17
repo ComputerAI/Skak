@@ -39,13 +39,13 @@ def score(player,depth):
     rook = 5.63         #4
     queen = 9.5         #5
     king = 20000        #6
-    pieces = [pawn,knight,bishop,rook,queen,king]
+    pieces = [0,pawn,knight,bishop,rook,queen,king]
     
     diff = 0    
-    for j in range(6):                                        #Go through each piece type
-        for i in board.pieces(j+1,player):                        #Your piecec are goooood
+    for j in range(1,7):                                        #Go through each piece type
+        for i in board.pieces(j,player):                        #Your piecec are goooood
             diff += pieces[j]*len(board.attacks(i))+pieces[j]
-        for i in board.pieces(j+1,not player):                    #Enemy pieces not so much
+        for i in board.pieces(j,not player):                    #Enemy pieces not so much
             diff -= pieces[j]*len(board.attacks(i))+pieces[j]
         #diff += len(board.pieces(j,player))*pieces[j]
         #diff -= len(board.pieces(j,not player))*pieces[j]
@@ -134,6 +134,3 @@ if __name__ == "__main__":
     print(board.is_fivefold_repetition())
     print(board.is_seventyfive_moves())
     print(c)
-
-    #BITBOARDS
-    #bitboard = board.transform()
