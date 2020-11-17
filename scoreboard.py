@@ -1,5 +1,7 @@
 def getScoreBoards():
-    kingBoard = [[0 for col in range(8)] for row in range(8)]
+    kingBoardWhite = [[0 for col in range(8)] for row in range(8)]
+    kingBoardBlack = kingBoardWhite.reverse()
+
     queenBoardWhite =  [[2,3,4,3,4,3,3,2],
                         [2,3,4,4,4,4,3,2],
                         [3,4,4,4,4,4,4,3],
@@ -49,6 +51,6 @@ def getScoreBoards():
                         [0,0,0,0,0,0,0,0]]
     pawnBoardBlack = pawnBoardWhite.reverse() #Change board values from white to black 
 
-    return [[pawnBoardWhite,knightBoardWhite,bishopBoardWhite,rookBoardWhite,queenBoardWhite,knightBoardWhite],
-            [pawnBoardBlack,knightBoardBlack,bishopBoardBlack,rookBoardBlack,queenBoardBlack,knightBoardBlack]]
+    return [[pawnBoardWhite,knightBoardWhite,bishopBoardWhite,rookBoardWhite,queenBoardWhite,kingBoardWhite],
+            [pawnBoardBlack,knightBoardBlack,bishopBoardBlack,rookBoardBlack,queenBoardBlack,kingBoardBlack]]
     
