@@ -8,6 +8,7 @@ def getScoreBoards():
                         [3,3,4,4,4,4,3,3],
                         [2,3,3,4,4,3,3,2],
                         [2,2,2,3,3,2,2,2],
+                        [2,2,2,2,2,2,2,2],
                         [0,0,0,0,0,0,0,0]]
     queenBoardBlack = queenBoardWhite.reverse() #Change board values from white to black
 
@@ -53,4 +54,3 @@ def getScoreBoards():
 
     return [[pawnBoardWhite,knightBoardWhite,bishopBoardWhite,rookBoardWhite,queenBoardWhite,kingBoardWhite],
             [pawnBoardBlack,knightBoardBlack,bishopBoardBlack,rookBoardBlack,queenBoardBlack,kingBoardBlack]]
-    

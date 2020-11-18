@@ -8,24 +8,30 @@ pip install PyQt5
 import chess
 import time
 import scoreboard
+import math
+from collections import OrderedDict
 
-ListOfScoreBoards = scoreboard.getScoreBoards() #Get scoreboards for black and white pieces
+ListOfScoreBoards = scoreboard.getScoreBoards() # Get scoreboards for black and white pieces
 
-def squareValueForPiece(piece):
-    print("Evalulating square value for ", piece)
-
-def findmove(): #Find available moves in sorted order
+def findmove(): 
+    # Find available moves in sorted order
     # Sort order:
-    # Start with last best moves follow up
-    # Prioritize capture of last moved piece
+    l=[]
+    # Start with last best moves follow up              ✓
+    # Prioritize capture of last moved piece 
+    # last = board.peek()
+    # board.attackers()
     # Killer moves: capture threatining pieces
     # Other captures: if you can capture do it
     # Pawn promotion: try to promte pawn
     # Castling
-    # All other moves
+    
+    # All other moves ✓
+    l.extend(board.legal_moves)
+    l = list(OrderedDict.fromkeys(l))
     # En passant
 
-    return list(board.legal_moves)
+    return l
 
 
 c=0
@@ -39,14 +45,27 @@ def score(player,depth):
     rook = 5.63         #4
     queen = 9.5         #5
     king = 20000        #6
-    pieces = [0,pawn,knight,bishop,rook,queen,king]
+    pieceScore = [pawn,knight,bishop,rook,queen,king]
     
     diff = 0    
-    for j in range(1,7):                                        #Go through each piece type
-        for i in board.pieces(j,player):                        #Your piecec are goooood
-            diff += pieces[j]*len(board.attacks(i))+pieces[j]
-        for i in board.pieces(j,not player):                    #Enemy pieces not so much
-            diff -= pieces[j]*len(board.attacks(i))+pieces[j]
+    for j in range(6):                                            #Go through each piece type
+        for i in board.pieces(j+1,player):                        #Your pieces are goooood
+            pieceBoard = ListOfScoreBoards[0][j]
+            diff += pieceBoard[i//8][math.floor(i%8)]+pieceScore[j] #TODO FIX
+
+            if board.is_attacked_by(not player, i):
+                diff -= 10
+            else :
+                diff += 2
+
+            if j == 6: # The piece is a king
+                diff -= 1 * (4 - (math.floor(i/8)))
+
+        
+        
+        #diff += pieceScore[j]*len(board.attacks(i))+pieceScore[j]
+        #for i in board.pieces(j+1,not player):                    #Enemy pieces not so much
+        #diff -= pieceScore[j]*len(board.attacks(i))+pieceScore[j]
         #diff += len(board.pieces(j,player))*pieces[j]
         #diff -= len(board.pieces(j,not player))*pieces[j]
     
@@ -58,7 +77,7 @@ def score(player,depth):
     return diff
 
 def alphabeta(alpha, beta, depth, player):
-    if depth == 0 or board.is_game_over(): return score(player, depth)
+    if depth <= 0 or board.is_game_over(): return score(player, depth)
     if board.turn == player:
         a=alpha
         for val in findmove():
@@ -85,14 +104,18 @@ def ab(depth, player):
     poss=findmove()
     if not poss: return -1
     mov=poss[0]
-    for val in poss:
-        board.push(val)
-        v = alphabeta(a, b, depth - 1, player)
-        board.pop()
-        #print(v,val)
-        if a < v:
-            a=v
-            mov=val
+    for i in range(1,depth+1):
+        board.push(mov)
+        v = alphabeta(a,b,i,player)
+        if a < v: a=v
+        board.pop()    
+        for val in poss:
+            board.push(val)
+            v = alphabeta(a, b, i, player)
+            board.pop()
+            if a < v:
+                a=v
+                mov=val
     return mov
 
 
@@ -113,21 +136,19 @@ def play(player):
 
 def autoplay(depth):
     while not board.is_game_over():
-        if board.turn == True: board.push(ab(depth, True))
-        else: board.push(ab(depth, False))
+        board.push(ab(depth, board.turn))
         print(board.unicode(),'\n')
     if not board.is_stalemate():
         if board.turn: print("Player white Wins")
         else: print("Player black Wins")
     else: print("It was a tie")
-#'''
+
 
 
 if __name__ == "__main__":
     board = chess.Board()
     #board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
     board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNp")
-    #print(ab(6,True))
     autoplay(4)
     print(board.is_insufficient_material())
     print(board.is_stalemate())
