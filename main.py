@@ -8,7 +8,6 @@ pip install PyQt5
 import chess
 import time
 import scoreboard
-import math
 from collections import OrderedDict
 
 ListOfScoreBoards = scoreboard.getScoreBoards() # Get scoreboards for black and white pieces
@@ -30,36 +29,56 @@ def findmove():
     l.extend(board.legal_moves)
     l = list(OrderedDict.fromkeys(l))
     # En passant
-
+    
     return l
+
+
+def scoreForPiece(piecetype, position): #Takes the number indicating the piece type and the piece location
+    pawnRow = [0,0,-1,0,2,14,30,0]
+    pawnLine = [-2,0,3,4,5,1,-2,-2]
+    switcher = { #Dictionary used like a switch statement
+        1: pawnRow[position//8] + pawnLine[position%8]*(position//8)/2,
+        2: 3.0*(4 - (position//8)),
+        3: 2.0*len(board.attacks(position)),
+        4: 1.5*len(board.attacks(position)),
+        5: 1.0*len(board.attacks(position)),
+        6: -1
+    }
+    return switcher.get(piecetype, 0) #Returns extra score for the given piece
 
 
 c=0
 def score(player,depth):
+    
     global c
     c += 1
                         #piecetype
-    pawn = 1.0          #1
-    knight = 3.05       #2
-    bishop = 3.33       #3
-    rook = 5.63         #4
-    queen = 9.5         #5
-    king = 20000        #6
+    pawn = 100          #1
+    knight = 305        #2
+    bishop = 333        #3
+    rook = 563          #4
+    queen = 950         #5
+    king = 1000000      #6
     pieceScore = [pawn,knight,bishop,rook,queen,king]
     
     diff = 0    
+    
+    if player:mul=1 
+    else: mul=-1
+    
     for j in range(6):                                            #Go through each piece type
         for i in board.pieces(j+1,player):                        #Your pieces are goooood
-            pieceBoard = ListOfScoreBoards[0][j]
-            diff += pieceBoard[i//8][math.floor(i%8)]+pieceScore[j] #TODO FIX
-
+            pieceBoard = ListOfScoreBoards[player][j]
+            
+            diff += mul*(pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(j,i)) #TODO FIX
+            
             if board.is_attacked_by(not player, i):
-                diff -= 10
+                diff -= mul*10
             else :
-                diff += 2
+                diff += mul*2
 
             if j == 6: # The piece is a king
-                diff -= 1 * (4 - (math.floor(i/8)))
+                diff -= mul*(1 * (4 - (i//8)))
 
         
         
@@ -74,7 +93,9 @@ def score(player,depth):
     elif board.is_checkmate():
         if board.turn is player: diff*=-king
         if board.turn is not player: diff*=king
+        
     return diff
+
 
 def alphabeta(alpha, beta, depth, player):
     if depth <= 0 or board.is_game_over(): return score(player, depth)
@@ -119,7 +140,7 @@ def ab(depth, player):
     return mov
 
 
-def play(player):
+def play(player): #FIXME Outdated
     E = not player
     while not board.is_game_over():
         if board.turn == player:
@@ -137,19 +158,20 @@ def play(player):
 def autoplay(depth):
     while not board.is_game_over():
         board.push(ab(depth, board.turn))
-        print(board.unicode(),'\n')
+        print(board.unicode(invert_color=True, borders=False, empty_square="⭘"),'\n') #Print the board where white is at the bottom of the board. Forms for empty squares: ⭘, ☐
     if not board.is_stalemate():
-        if board.turn: print("Player white Wins")
-        else: print("Player black Wins")
+        if not board.turn: print("White wins!") #Since the game changes turn after we call board.push() white wins when it's blacks turn and vice versa.
+        else: print("Black wins!")
     else: print("It was a tie")
 
 
 
 if __name__ == "__main__":
-    board = chess.Board()
+    board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     #board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
-    board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNp")
+    #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
     autoplay(4)
+    
     print(board.is_insufficient_material())
     print(board.is_stalemate())
     print(board.is_fivefold_repetition())
