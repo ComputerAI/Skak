@@ -169,10 +169,16 @@ def ab(depth, player):
     return mov
 
 
-def play(depth):
-    E = not board.turn
+def play(color,depth):
+    if color :
+        E = not board.turn
+        P = board.turn
+    else :
+        E = board.turn
+        P = not board.turn
     while not board.is_game_over():
-        if board.turn:
+        if P:
+            print(board)
             print()
             print(board.unicode(invert_color = True,borders=True))
             print()
@@ -181,7 +187,10 @@ def play(depth):
             print()
             board.push_uci(input("Your move: \n"))
             print(board.unicode(invert_color = True,borders=True))
-        else: board.push(ab(depth, E))
+            P = not P
+        else: 
+            board.push(ab(depth, E))
+            P = not P
     
     if not board.is_stalemate():
         if E: print(f"Player {player} Wins")
@@ -200,11 +209,16 @@ def autoplay(depth):
 
 
 if __name__ == "__main__":
-    #board = chess.Board("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R w KQkq - 0 1")
+    # Start board
     board = chess.Board()
-    #board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
-    #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
-    #autoplay(4)
     
     # Player choose color
-    play(4)
+    print("Welcome to a game of chess versus an AI")
+    color = input("Please choose a color (white or black)\n")
+
+    if color == "white":
+        play(board.turn, 4)
+    elif color == "black":
+        play(not board.turn, 4)
+    else:
+        print("Not a real color. Exiting...")
