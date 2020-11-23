@@ -117,6 +117,14 @@ def score(player,depth):
         diff -= mul*50
     else:
         diff += mul*2
+
+    # Castling rights for white 
+    if (bool(board.castling_rights & chess.BB_A1) or bool(board.castling_rights & chess.BB_A8)) and player:
+        diff += mul+16
+
+    # Castling rights for black
+    if (bool(board.castling_rights & chess.BB_H1) or bool(board.castling_rights & chess.BB_H8)) and not player:
+        diff += mul+16
     
     #If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
     if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff*=-king
