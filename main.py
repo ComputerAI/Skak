@@ -14,41 +14,70 @@ ListOfScoreBoards = scoreboard.getScoreBoards() # Get scoreboards for black and 
 
 def findmove(): 
     # Find available moves in sorted order
-    # Sort order:
     l=[]
     # Start with last best moves follow up              ✓
-    # Prioritize capture of last moved piece 
-    # last = board.peek()
-    # board.attackers()
-    # Killer moves: capture threatining pieces
-    # Other captures: if you can capture do it
-    # Pawn promotion: try to promte pawn
-    # Castling
+
+    #''' With current scoring, this is slower
+    # Prioritize capture of last moved piece            ✓
+    if len(board.move_stack)>0:
+        last = board.peek()
+        piece = chess.parse_square((str(last)[2:]))
+        froms = board.attackers(board.turn,piece)
+        move = [chess.Move(i,piece) for i in froms]
+        l.extend(move)
+    ours = [board.pieces(j,board.turn) for j in range(1,7)]
+    for ptypes in ours:
+        for froms in ptypes:
+            # Killer moves: capture threatining pieces  ✓
+            attackers = board.attackers(not board.turn,froms)
+            attacks = board.attacks(froms)
+            moves = [chess.Move(froms,to) for to in attacks if attackers.__contains__(to)]
+            # Other captures: if you can capture do it  ✓
+            moves.extend([chess.Move(froms,to) for to in attacks if not attackers.__contains__(to)])
+            l.extend([move for move in moves if board.is_legal(move)])
+    # Pawn promotion: try to promte pawn                ✓/✓
+    if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn<8*2]
+    else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn >=8*7]
+    l.extend([m for m in moves if board.is_legal(m)])
+    # if len([item for sublist in ours for item in sublist])<8:
+    if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
+    else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
+    l.extend([m for m in moves if board.is_legal(m)])
     
+    # Castling        X
+    # for pie in ours[3]:#Rook = 4 for 1 indexed array
+    #     if(board.castling_rights & pie): print("castling",pie, [o for o in ours[5]][0])
+    #'''
     # All other moves ✓
-    l.extend(board.legal_moves)
+    ll = list(board.legal_moves)
+    l.extend(ll)
     l = list(OrderedDict.fromkeys(l))
-    # En passant
-    
+    # En passant      X (Alredy in "capture if possible")
+
+    #if len(l) is not len(ll): print("Illigal move detected",len(ll),len(l))
     return l
 
+centerManhattanDistance =  [[6,5,4,3,3,4,5,6],
+                            [5,4,3,2,2,3,4,5],
+                            [4,3,2,1,1,2,3,4],
+                            [3,2,1,0,0,1,2,3],
+                            [3,2,1,0,0,1,2,3],
+                            [4,3,2,1,1,2,3,4],
+                            [5,4,3,2,2,3,4,5],
+                            [6,5,4,3,3,4,5,6]]
 
 def scoreForPiece(player, piecetype, position): #Takes the number indicating the piece type and the piece location
     pawnRow = [0,0,-1,0,2,14,30,0]
     if player: pawnLine = [-2,-2,1,5,4,3,0,-2]
     else:pawnLine = [-2,0,3,4,5,1,-2,-2]
     
-    knightScore = 3.0*4
-    if (position//8) > 4: knightScore = 3.0*(4 - ((position//8) - 4))
-    elif (position//8) < 3: knightScore = 3.0*(4 - (3 - (position//8)))
-    
     switcher = { #Dictionary used like a switch statement
-        1: pawnRow[position//8] + pawnLine[position%8]*(position//8)/2,
-        2: knightScore,
-        3: 2.0*len(board.attacks(position)),
-        4: 1.5*len(board.attacks(position)),
-        5: 1.0*len(board.attacks(position)),
-        6: 0
+        0: pawnRow[position//8] + pawnLine[position%8]*((position//8)/2),
+        1: 3.0*(4 - centerManhattanDistance[position//8][position%8]),
+        2: 2.0*len(board.attacks(position)),
+        3: 1.5*len(board.attacks(position)),
+        4: 1.0*len(board.attacks(position)),
+        5: -centerManhattanDistance[position//8][position%8]
     }
     return switcher.get(piecetype, 0) #Returns extra score for the given piece
 
@@ -64,7 +93,7 @@ def score(player,depth):
     bishop = 333        #3
     rook = 563          #4
     queen = 950         #5
-    king = 200000      #6
+    king = 20000       #6
     pieceScore = [pawn,knight,bishop,rook,queen,king]
     
     threatenedPieces = 0
@@ -81,9 +110,6 @@ def score(player,depth):
                     threatenedPieces += 1
             
             diff += mul*(pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(player,j,i)) #TODO FIX
-            
-            if j == 6: # The piece is a king
-                diff -= mul*(1 * (4 - (i//8)))
     
     if threatenedPieces==1:
         diff -= mul*10
