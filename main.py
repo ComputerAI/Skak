@@ -36,13 +36,13 @@ def findmove():
             moves.extend([chess.Move(froms,to) for to in attacks if not attackers.__contains__(to)])
             l.extend([move for move in moves if board.is_legal(move)])
     # Pawn promotion: try to promte pawn                ✓/✓
-    if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn<8*2]
-    else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn >=8*7]
-    l.extend([m for m in moves if board.is_legal(m)])
-    # if len([item for sublist in ours for item in sublist])<8:
-    if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
-    else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
-    l.extend([m for m in moves if board.is_legal(m)])
+    #if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn<8*2]
+    #else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn >=8*7]
+    #l.extend([m for m in moves if board.is_legal(m)])
+    ## if len([item for sublist in ours for item in sublist])<8:
+    #if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
+    #else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
+    #l.extend([m for m in moves if board.is_legal(m)])
     
     # Castling        X
     # for pie in ours[3]:#Rook = 4 for 1 indexed array
@@ -57,14 +57,14 @@ def findmove():
     #if len(l) is not len(ll): print("Illigal move detected",len(ll),len(l))
     return l
 
-centerManhattanDistance =  [[6,5,4,3,3,4,5,6],
-                            [5,4,3,2,2,3,4,5],
-                            [4,3,2,1,1,2,3,4],
-                            [3,2,1,0,0,1,2,3],
-                            [3,2,1,0,0,1,2,3],
-                            [4,3,2,1,1,2,3,4],
-                            [5,4,3,2,2,3,4,5],
-                            [6,5,4,3,3,4,5,6]]
+centerManhattanDistance =  [[60,50,40,30,30,40,50,60],
+                            [50,40,30,20,20,30,40,50],
+                            [40,30,20,10,10,20,30,40],
+                            [30,20,10,0,0,10,20,30],
+                            [30,20,10,0,0,10,20,30],
+                            [40,30,20,10,10,20,30,40],
+                            [50,40,30,20,20,30,40,50],
+                            [60,50,40,30,30,40,50,60]]
 
 def scoreForPiece(player, piecetype, position): #Takes the number indicating the piece type and the piece location
     pawnRow = [0,0,-1,0,2,14,30,0]
@@ -77,9 +77,9 @@ def scoreForPiece(player, piecetype, position): #Takes the number indicating the
         2: 2.0*len(board.attacks(position)),
         3: 1.5*len(board.attacks(position)),
         4: 1.0*len(board.attacks(position)),
-        5: -centerManhattanDistance[position//8][position%8]
+        5: centerManhattanDistance[position//8][position%8]
     }
-    return switcher.get(piecetype, 0) #Returns extra score for the given piece
+    return switcher.get(piecetype) #Returns extra score for the given piece
 
 
 c=0
@@ -93,37 +93,56 @@ def score(player,depth):
     bishop = 333        #3
     rook = 563          #4
     queen = 950         #5
-    king = 20000       #6
+    king = 20000        #6
     pieceScore = [pawn,knight,bishop,rook,queen,king]
     
-    threatenedPieces = 0
-    diff = 0    
+    threatenedPiecesWhite = 0
+    threatenedPiecesBlack = 0
+    diffWhite = 0
+    diffBlack = 0
     
     if player:mul=1 
     else: mul=-1
     
     for j in range(6):                                            #Go through each piece type
-        for i in board.pieces(j+1,player):                        #Your pieces are goooood
-            pieceBoard = ListOfScoreBoards[player][j]
-            for k in board.attackers(not player, i):
+        for i in board.pieces(j+1,True):                        #Your pieces are goooood
+            pieceBoard = ListOfScoreBoards[True][j]
+            for k in board.attackers(False, i):
                 if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3:
-                    threatenedPieces += 1
+                    threatenedPiecesWhite += 1
             
-            diff += mul*(pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(player,j,i)) #TODO FIX
+            diffWhite += pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(True,j,i) #TODO FIX
+        
+        for i in board.pieces(j+1,False):                        #Your pieces are goooood
+            pieceBoard = ListOfScoreBoards[False][j]
+            for k in board.attackers(True, i):
+                if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3:
+                    threatenedPiecesBlack += 1
+            
+            diffBlack -= pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(False,j,i) #TODO FIX
     
-    if threatenedPieces==1:
-        diff -= mul*10
-    elif threatenedPieces>1:
-        diff -= mul*50
+    if threatenedPiecesBlack==1:
+        diffBlack -= 10
+    elif threatenedPiecesBlack>1:
+        diffBlack -= 50
     else:
-        diff += mul*2
+        diffBlack += 2
+        
+    if threatenedPiecesWhite==1:
+        diffWhite += 10
+    elif threatenedPiecesWhite>1:
+        diffWhite += 50
+    else:
+        diffWhite -= 2
+    
+    diff = diffWhite+diffBlack
     
     #If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
-    if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff*=-king
+    if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff+=-king
     elif board.is_checkmate():
-        if board.turn is player: diff*=-king
-        if board.turn is not player: diff*=king
-    return diff
+        if board.turn is player: diff+=-king
+        if board.turn is not player: diff+=king
+    return mul*diff
 
 
 def alphabeta(alpha, beta, depth, player):
@@ -149,19 +168,19 @@ def alphabeta(alpha, beta, depth, player):
 
 
 def ab(depth, player):
-    a=-1000000
-    b=-a
     poss=findmove()
     if not poss: return -1
     mov=poss[0]
     for i in range(1,depth+1):
+        a=-1000000
+        b=-a
         board.push(mov)
-        v = alphabeta(a,b,i,player)
+        v = alphabeta(a,b,i-1,player)
         if a < v: a=v
-        board.pop()    
+        board.pop()
         for val in poss:
             board.push(val)
-            v = alphabeta(a, b, i, player)
+            v = alphabeta(a, b, depth-1, player)
             board.pop()
             if a < v:
                 a=v
