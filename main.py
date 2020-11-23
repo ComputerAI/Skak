@@ -25,7 +25,6 @@ def findmove():
         froms = board.attackers(board.turn,piece)
         move = [chess.Move(i,piece) for i in froms]
         l.extend(move)
-
     ours = [board.pieces(j,board.turn) for j in range(1,7)]
     for ptypes in ours:
         for froms in ptypes:
@@ -36,12 +35,10 @@ def findmove():
             # Other captures: if you can capture do it  ✓
             moves.extend([chess.Move(froms,to) for to in attacks if not attackers.__contains__(to)])
             l.extend([move for move in moves if board.is_legal(move)])
-
     # Pawn promotion: try to promte pawn                ✓/✓
     if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn<8*2]
     else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn >=8*7]
     l.extend([m for m in moves if board.is_legal(m)])
-
     # if len([item for sublist in ours for item in sublist])<8:
     if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
     else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
@@ -50,7 +47,6 @@ def findmove():
     # Castling        X
     # for pie in ours[3]:#Rook = 4 for 1 indexed array
     #     if(board.castling_rights & pie): print("castling",pie, [o for o in ours[5]][0])
-
     #'''
     # All other moves ✓
     ll = list(board.legal_moves)
@@ -58,20 +54,30 @@ def findmove():
     l = list(OrderedDict.fromkeys(l))
     # En passant      X (Alredy in "capture if possible")
 
-    if len(l) is not len(ll): print("Illigal move detected",len(ll),len(l))
+    #if len(l) is not len(ll): print("Illigal move detected",len(ll),len(l))
     return l
 
+centerManhattanDistance =  [[6,5,4,3,3,4,5,6],
+                            [5,4,3,2,2,3,4,5],
+                            [4,3,2,1,1,2,3,4],
+                            [3,2,1,0,0,1,2,3],
+                            [3,2,1,0,0,1,2,3],
+                            [4,3,2,1,1,2,3,4],
+                            [5,4,3,2,2,3,4,5],
+                            [6,5,4,3,3,4,5,6]]
 
-def scoreForPiece(piecetype, position): #Takes the number indicating the piece type and the piece location
+def scoreForPiece(player, piecetype, position): #Takes the number indicating the piece type and the piece location
     pawnRow = [0,0,-1,0,2,14,30,0]
-    pawnLine = [-2,0,3,4,5,1,-2,-2]
+    if player: pawnLine = [-2,-2,1,5,4,3,0,-2]
+    else:pawnLine = [-2,0,3,4,5,1,-2,-2]
+    
     switcher = { #Dictionary used like a switch statement
-        1: pawnRow[position//8] + pawnLine[position%8]*(position//8)/2,
-        2: 3.0*(4 - (position//8)),
-        3: 2.0*len(board.attacks(position)),
-        4: 1.5*len(board.attacks(position)),
-        5: 1.0*len(board.attacks(position)),
-        6: -1
+        0: pawnRow[position//8] + pawnLine[position%8]*((position//8)/2),
+        1: 3.0*(4 - centerManhattanDistance[position//8][position%8]),
+        2: 2.0*len(board.attacks(position)),
+        3: 1.5*len(board.attacks(position)),
+        4: 1.0*len(board.attacks(position)),
+        5: -centerManhattanDistance[position//8][position%8]
     }
     return switcher.get(piecetype, 0) #Returns extra score for the given piece
 
@@ -87,9 +93,10 @@ def score(player,depth):
     bishop = 333        #3
     rook = 563          #4
     queen = 950         #5
-    king = 1000000      #6
+    king = 20000       #6
     pieceScore = [pawn,knight,bishop,rook,queen,king]
     
+    threatenedPieces = 0
     diff = 0    
     
     if player:mul=1 
@@ -98,31 +105,24 @@ def score(player,depth):
     for j in range(6):                                            #Go through each piece type
         for i in board.pieces(j+1,player):                        #Your pieces are goooood
             pieceBoard = ListOfScoreBoards[player][j]
+            for k in board.attackers(not player, i):
+                if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3:
+                    threatenedPieces += 1
             
-            diff += mul*(pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(j,i)) #TODO FIX
-            
-            if board.is_attacked_by(not player, i):
-                diff -= mul*10
-            else :
-                diff += mul*2
-
-            if j == 6: # The piece is a king
-                diff -= mul*(1 * (4 - (i//8)))
-
-        
-        
-        #diff += pieceScore[j]*len(board.attacks(i))+pieceScore[j]
-        #for i in board.pieces(j+1,not player):                    #Enemy pieces not so much
-        #diff -= pieceScore[j]*len(board.attacks(i))+pieceScore[j]
-        #diff += len(board.pieces(j,player))*pieces[j]
-        #diff -= len(board.pieces(j,not player))*pieces[j]
+            diff += mul*(pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(player,j,i)) #TODO FIX
+    
+    if threatenedPieces==1:
+        diff -= mul*10
+    elif threatenedPieces>1:
+        diff -= mul*50
+    else:
+        diff += mul*2
     
     #If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
     if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff*=-king
     elif board.is_checkmate():
         if board.turn is player: diff*=-king
         if board.turn is not player: diff*=king
-        
     return diff
 
 
@@ -149,7 +149,7 @@ def alphabeta(alpha, beta, depth, player):
 
 
 def ab(depth, player):
-    a=-1000
+    a=-1000000
     b=-a
     poss=findmove()
     if not poss: return -1
@@ -196,7 +196,7 @@ def autoplay(depth):
 
 
 if __name__ == "__main__":
-    board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    board = chess.Board("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R w KQkq - 0 1")
     #board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
     autoplay(4)
