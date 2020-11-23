@@ -14,22 +14,51 @@ ListOfScoreBoards = scoreboard.getScoreBoards() # Get scoreboards for black and 
 
 def findmove(): 
     # Find available moves in sorted order
-    # Sort order:
     l=[]
     # Start with last best moves follow up              ✓
-    # Prioritize capture of last moved piece 
-    # last = board.peek()
-    # board.attackers()
-    # Killer moves: capture threatining pieces
-    # Other captures: if you can capture do it
-    # Pawn promotion: try to promte pawn
-    # Castling
+
+    ''' With current scoring, this is slower
+    # Prioritize capture of last moved piece            ✓
+    if len(board.move_stack)>0:
+        last = board.peek()
+        piece = chess.parse_square((str(last)[2:]))
+        froms = board.attackers(board.turn,piece)
+        move = [chess.Move(i,piece) for i in froms]
+        l.extend(move)
+
+    ours = [board.pieces(j,board.turn) for j in range(1,7)]
+    for ptypes in ours:
+        for froms in ptypes:
+            # Killer moves: capture threatining pieces  ✓
+            attackers = board.attackers(not board.turn,froms)
+            attacks = board.attacks(froms)
+            moves = [chess.Move(froms,to) for to in attacks if attackers.__contains__(to)]
+            # Other captures: if you can capture do it  ✓
+            moves.extend([chess.Move(froms,to) for to in attacks if not attackers.__contains__(to)])
+            l.extend([move for move in moves if board.is_legal(move)])
+
+    # Pawn promotion: try to promte pawn                ✓/✓
+    if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn<8*2]
+    else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn >=8*7]
+    l.extend([m for m in moves if board.is_legal(m)])
+
+    # if len([item for sublist in ours for item in sublist])<8:
+    if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
+    else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
+    l.extend([m for m in moves if board.is_legal(m)])
     
+    # Castling        X
+    # for pie in ours[3]:#Rook = 4 for 1 indexed array
+    #     if(board.castling_rights & pie): print("castling",pie, [o for o in ours[5]][0])
+
+    #'''
     # All other moves ✓
-    l.extend(board.legal_moves)
+    ll = list(board.legal_moves)
+    l.extend(ll)
     l = list(OrderedDict.fromkeys(l))
-    # En passant
-    
+    # En passant      X (Alredy in "capture if possible")
+
+    if len(l) is not len(ll): print("Illigal move detected",len(ll),len(l))
     return l
 
 
