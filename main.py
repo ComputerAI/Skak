@@ -169,18 +169,22 @@ def ab(depth, player):
     return mov
 
 
-def play(player): #FIXME Outdated
-    E = not player
+def play(depth):
+    E = not board.turn
     while not board.is_game_over():
-        if board.turn == player:
-            print(board.unicode())
+        if board.turn:
+            print()
+            print(board.unicode(invert_color = True,borders=True))
+            print()
+            print("Your possible moves are:")
             print([str(i) for i in board.legal_moves])
             print()
-            board.push_san(input("Your move: \n"))
-        else: board.push(ab(3, E))
+            board.push_uci(input("Your move: \n"))
+            print(board.unicode(invert_color = True,borders=True))
+        else: board.push(ab(depth, E))
     
     if not board.is_stalemate():
-        if board.turn != player: print(f"Player {player} Wins")
+        if E: print(f"Player {player} Wins")
         else: print(f"Player {E} Wins")
     else: print("It was a tie")
 
@@ -196,13 +200,11 @@ def autoplay(depth):
 
 
 if __name__ == "__main__":
-    board = chess.Board("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R w KQkq - 0 1")
+    #board = chess.Board("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R w KQkq - 0 1")
+    board = chess.Board()
     #board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
-    autoplay(4)
+    #autoplay(4)
     
-    print(board.is_insufficient_material())
-    print(board.is_stalemate())
-    print(board.is_fivefold_repetition())
-    print(board.is_seventyfive_moves())
-    print(c)
+    # Player choose color
+    play(4)
