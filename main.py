@@ -175,6 +175,7 @@ def alphabeta(alpha, beta, depth, player):
 
 
 def ab(depth, player):
+    global mov, stop
     poss=findmove()
     if not poss: return -1
     mov=poss[0]
@@ -187,11 +188,14 @@ def ab(depth, player):
         board.pop()
         for val in poss:
             board.push(val)
-            v = alphabeta(a, b, depth-1, player)
+            v = alphabeta(a, b, i-1, player)
             board.pop()
-            if a < v and not stop:
+            if a < v:
                 a=v
                 mov=val
+            if stop:
+                print(f"depth:{i}",f"value:{a}")
+                return mov
     return mov
 
 def threadded(depth,player,time):
@@ -207,24 +211,24 @@ def threadded(depth,player,time):
     stop=False
     return mov
 
-def play(player,depth): #FIXME Outdated
+def play(player,depth,time): #FIXME Outdated
     E = not player
     while not board.is_game_over():
         if board.turn == player:
             print(board.unicode(invert_color=True, borders=True))
             print([str(i) for i in board.legal_moves],'\n')
             board.push_uci(input("Your move: \n"))
-        else: board.push(ab(depth, E))
+        else: board.push(threadded(depth, E, time))
     
     if not board.is_stalemate():
         if board.turn != player: print(f"Player {player} Wins")
         else: print(f"Player {E} Wins")
     else: print("It was a tie")
 
-def autoplay(depth):
+def autoplay(depth,time):
     while not board.is_game_over():
-        board.push(ab(depth, board.turn))
-        print(board.unicode(invert_color=True, borders=False, empty_square="⭘ "),'\n') #Print the board where white is at the bottom of the board. Forms for empty squares: ⭘, ☐
+        board.push(threadded(depth, board.turn,time))
+        print(board.unicode(invert_color=True, borders=False, empty_square="⭘"),'\n') #Print the board where white is at the bottom of the board. Forms for empty squares: ⭘, ☐
     if not board.is_stalemate():
         if not board.turn: print("White wins!") #Since the game changes turn after we call board.push() white wins when it's blacks turn and vice versa.
         else: print("Black wins!")
@@ -236,16 +240,15 @@ if __name__ == "__main__":
     board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     #board._set_board_fen("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
-    #autoplay(4)
-    print("Welcome to a game of chess versus an AI")
-    color = input("Please choose a color (white or black)\n")
-
-    if color == "white":
-        play(True, 4)
-    elif color == "black":
-        play(False, 4)
-    else:
-        print("Not a real color. Exiting...")
+    autoplay(20,10)
+    # print("Welcome to a game of chess versus an AI")
+    # color = input("Please choose a color (white or black)\n")
+    # if color == "white":
+    #     play(True, 20)
+    # elif color == "black":
+    #     play(False, 20)
+    # else:
+    #     print("Not a real color. Exiting...")
     #print(board.is_insufficient_material())
     #print(board.is_stalemate())
     #print(board.is_fivefold_repetition())
