@@ -9,6 +9,7 @@ import chess
 import time
 import scoreboard
 from collections import OrderedDict
+import threading
 
 ListOfScoreBoards = scoreboard.getScoreBoards() # Get scoreboards for black and white pieces
 
@@ -17,14 +18,14 @@ def findmove():
     l=[]
     # Start with last best moves follow up              ✓
 
-    ''' With current scoring, this is slower
+    # With current scoring, this is slower
     # Prioritize capture of last moved piece            ✓
     if len(board.move_stack)>0:
-        last = board.peek()
-        piece = chess.parse_square((str(last)[2:]))
+        last = str(board.peek())
+        piece = chess.parse_square(last[2:4])
         froms = board.attackers(board.turn,piece)
         move = [chess.Move(i,piece) for i in froms]
-        l.extend(move)
+        l.extend([m for m in move if board.is_legal(m)])
 
     ours = [board.pieces(j,board.turn) for j in range(1,7)]
     for ptypes in ours:
@@ -38,14 +39,14 @@ def findmove():
             l.extend([move for move in moves if board.is_legal(move)])
 
     # Pawn promotion: try to promte pawn                ✓/✓
-    if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn<8*2]
-    else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0] if pawn >=8*7]
+    if board.turn: moves = [chess.Move(pawn,pawn+8,5) for pawn in ours[0] if pawn>=8*6]
+    else: moves = [chess.Move(pawn,pawn-8,5) for pawn in ours[0] if pawn <8*2]
     l.extend([m for m in moves if board.is_legal(m)])
 
     # if len([item for sublist in ours for item in sublist])<8:
-    if board.turn: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
-    else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
-    l.extend([m for m in moves if board.is_legal(m)])
+    # if board.turn: moves = [chess.Move(pawn,pawn+8) for pawn in ours[0]]
+    # else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
+    # l.extend([m for m in moves if board.is_legal(m)])
     
     # Castling        X
     # for pie in ours[3]:#Rook = 4 for 1 indexed array
@@ -57,8 +58,9 @@ def findmove():
     l.extend(ll)
     l = list(OrderedDict.fromkeys(l))
     # En passant      X (Alredy in "capture if possible")
-
-    if len(l) is not len(ll): print("Illigal move detected",len(ll),len(l))
+    if len(l) is not len(ll): 
+        print("Illigal move detected",len(ll),len(l))
+        l = [i for i in l if board.is_legal(i)]
     return l
 
 
@@ -77,6 +79,8 @@ def scoreForPiece(piecetype, position): #Takes the number indicating the piece t
 
 
 c=0
+stop = False
+mov = None
 def score(player,depth):
     
     global c
@@ -127,7 +131,8 @@ def score(player,depth):
 
 
 def alphabeta(alpha, beta, depth, player):
-    if depth <= 0 or board.is_game_over(): return score(player, depth)
+    global stop
+    if depth <= 0 or board.is_game_over() or stop: return score(player, depth)
     if board.turn == player:
         a=alpha
         for val in findmove():
@@ -163,11 +168,23 @@ def ab(depth, player):
             board.push(val)
             v = alphabeta(a, b, i, player)
             board.pop()
-            if a < v:
+            if a < v and not stop:
                 a=v
                 mov=val
     return mov
 
+def threadded(depth,player,time):
+    global mov, stop
+    stack = len(board.move_stack)
+    p = threading.Thread(target=ab, args=(depth,player))
+    p.start()
+    p.join(time)
+    if p.is_alive():
+        stop=True
+        p.join()
+    for _ in range(len(board.move_stack)-stack): board.pop()
+    stop=False
+    return mov
 
 def play(player): #FIXME Outdated
     E = not player
