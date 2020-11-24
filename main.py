@@ -215,8 +215,8 @@ def autoplay(depth):
 
 
 if __name__ == "__main__":
-    board = chess.Board("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R w KQkq - 0 1")
-    #board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
+    board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    #board._set_board_fen("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
     autoplay(4)
     
