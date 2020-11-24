@@ -37,7 +37,6 @@ def findmove():
             # Other captures: if you can capture do it  ✓
             moves.extend([chess.Move(froms,to) for to in attacks if not attackers.__contains__(to)])
             l.extend([move for move in moves if board.is_legal(move)])
-
     # Pawn promotion: try to promte pawn                ✓/✓
     if board.turn: moves = [chess.Move(pawn,pawn+8,5) for pawn in ours[0] if pawn>=8*6]
     else: moves = [chess.Move(pawn,pawn-8,5) for pawn in ours[0] if pawn <8*2]
@@ -51,7 +50,6 @@ def findmove():
     # Castling        X
     # for pie in ours[3]:#Rook = 4 for 1 indexed array
     #     if(board.castling_rights & pie): print("castling",pie, [o for o in ours[5]][0])
-
     #'''
     # All other moves ✓
     ll = list(board.legal_moves)
@@ -63,19 +61,29 @@ def findmove():
         l = [i for i in l if board.is_legal(i)]
     return l
 
+centerManhattanDistance =  [[60,50,40,30,30,40,50,60],
+                            [50,40,30,20,20,30,40,50],
+                            [40,30,20,10,10,20,30,40],
+                            [30,20,10,0,0,10,20,30],
+                            [30,20,10,0,0,10,20,30],
+                            [40,30,20,10,10,20,30,40],
+                            [50,40,30,20,20,30,40,50],
+                            [60,50,40,30,30,40,50,60]]
 
-def scoreForPiece(piecetype, position): #Takes the number indicating the piece type and the piece location
+def scoreForPiece(player, piecetype, position): #Takes the number indicating the piece type and the piece location
     pawnRow = [0,0,-1,0,2,14,30,0]
-    pawnLine = [-2,0,3,4,5,1,-2,-2]
+    if player: pawnLine = [-2,-2,1,5,4,3,0,-2]
+    else:pawnLine = [-2,0,3,4,5,1,-2,-2]
+    
     switcher = { #Dictionary used like a switch statement
-        1: pawnRow[position//8] + pawnLine[position%8]*(position//8)/2,
-        2: 3.0*(4 - (position//8)),
-        3: 2.0*len(board.attacks(position)),
-        4: 1.5*len(board.attacks(position)),
-        5: 1.0*len(board.attacks(position)),
-        6: -1
+        0: pawnRow[position//8] + pawnLine[position%8]*((position//8)/2),
+        1: 3.0*(4 - centerManhattanDistance[position//8][position%8]),
+        2: 2.0*len(board.attacks(position)),
+        3: 1.5*len(board.attacks(position)),
+        4: 1.0*len(board.attacks(position)),
+        5: centerManhattanDistance[position//8][position%8]
     }
-    return switcher.get(piecetype, 0) #Returns extra score for the given piece
+    return switcher.get(piecetype) #Returns extra score for the given piece
 
 
 c=0
@@ -91,43 +99,56 @@ def score(player,depth):
     bishop = 333        #3
     rook = 563          #4
     queen = 950         #5
-    king = 1000000      #6
+    king = 20000        #6
     pieceScore = [pawn,knight,bishop,rook,queen,king]
     
-    diff = 0    
+    threatenedPiecesWhite = 0
+    threatenedPiecesBlack = 0
+    diffWhite = 0
+    diffBlack = 0
     
     if player:mul=1 
     else: mul=-1
     
     for j in range(6):                                            #Go through each piece type
-        for i in board.pieces(j+1,player):                        #Your pieces are goooood
-            pieceBoard = ListOfScoreBoards[player][j]
+        for i in board.pieces(j+1,True):                        #Your pieces are goooood
+            pieceBoard = ListOfScoreBoards[True][j]
+            for k in board.attackers(False, i):
+                if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3:
+                    threatenedPiecesWhite += 1
             
-            diff += mul*(pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(j,i)) #TODO FIX
+            diffWhite += pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(True,j,i) #TODO FIX
+        
+        for i in board.pieces(j+1,False):                        #Your pieces are goooood
+            pieceBoard = ListOfScoreBoards[False][j]
+            for k in board.attackers(True, i):
+                if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3:
+                    threatenedPiecesBlack += 1
             
-            if board.is_attacked_by(not player, i):
-                diff -= mul*10
-            else :
-                diff += mul*2
-
-            if j == 6: # The piece is a king
-                diff -= mul*(1 * (4 - (i//8)))
-
+            diffBlack -= pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(False,j,i) #TODO FIX
+    
+    if threatenedPiecesBlack==1:
+        diffBlack -= 10
+    elif threatenedPiecesBlack>1:
+        diffBlack -= 50
+    else:
+        diffBlack += 2
         
-        
-        #diff += pieceScore[j]*len(board.attacks(i))+pieceScore[j]
-        #for i in board.pieces(j+1,not player):                    #Enemy pieces not so much
-        #diff -= pieceScore[j]*len(board.attacks(i))+pieceScore[j]
-        #diff += len(board.pieces(j,player))*pieces[j]
-        #diff -= len(board.pieces(j,not player))*pieces[j]
+    if threatenedPiecesWhite==1:
+        diffWhite += 10
+    elif threatenedPiecesWhite>1:
+        diffWhite += 50
+    else:
+        diffWhite -= 2
+    
+    diff = diffWhite+diffBlack
     
     #If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
-    if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff*=-king
+    if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff+=-king
     elif board.is_checkmate():
-        if board.turn is player: diff*=-king
-        if board.turn is not player: diff*=king
-        
-    return diff
+        if board.turn is player: diff+=-king
+        if board.turn is not player: diff+=king
+    return mul*diff
 
 
 def alphabeta(alpha, beta, depth, player):
@@ -154,19 +175,19 @@ def alphabeta(alpha, beta, depth, player):
 
 
 def ab(depth, player):
-    a=-1000
-    b=-a
     poss=findmove()
     if not poss: return -1
     mov=poss[0]
     for i in range(1,depth+1):
+        a=-1000000
+        b=-a
         board.push(mov)
-        v = alphabeta(a,b,i,player)
+        v = alphabeta(a,b,i-1,player)
         if a < v: a=v
-        board.pop()    
+        board.pop()
         for val in poss:
             board.push(val)
-            v = alphabeta(a, b, i, player)
+            v = alphabeta(a, b, depth-1, player)
             board.pop()
             if a < v and not stop:
                 a=v
@@ -186,15 +207,14 @@ def threadded(depth,player,time):
     stop=False
     return mov
 
-def play(player): #FIXME Outdated
+def play(player,depth): #FIXME Outdated
     E = not player
     while not board.is_game_over():
         if board.turn == player:
-            print(board.unicode())
-            print([str(i) for i in board.legal_moves])
-            print()
-            board.push_san(input("Your move: \n"))
-        else: board.push(ab(3, E))
+            print(board.unicode(invert_color=True, borders=True))
+            print([str(i) for i in board.legal_moves],'\n')
+            board.push_uci(input("Your move: \n"))
+        else: board.push(ab(depth, E))
     
     if not board.is_stalemate():
         if board.turn != player: print(f"Player {player} Wins")
@@ -204,7 +224,7 @@ def play(player): #FIXME Outdated
 def autoplay(depth):
     while not board.is_game_over():
         board.push(ab(depth, board.turn))
-        print(board.unicode(invert_color=True, borders=False, empty_square="⭘"),'\n') #Print the board where white is at the bottom of the board. Forms for empty squares: ⭘, ☐
+        print(board.unicode(invert_color=True, borders=False, empty_square="⭘ "),'\n') #Print the board where white is at the bottom of the board. Forms for empty squares: ⭘, ☐
     if not board.is_stalemate():
         if not board.turn: print("White wins!") #Since the game changes turn after we call board.push() white wins when it's blacks turn and vice versa.
         else: print("Black wins!")
@@ -214,12 +234,20 @@ def autoplay(depth):
 
 if __name__ == "__main__":
     board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-    #board._set_board_fen("r7/1k2N1p1/3R4/3R4/2Q5/8/1K6/8")
+    #board._set_board_fen("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
-    autoplay(4)
-    
-    print(board.is_insufficient_material())
-    print(board.is_stalemate())
-    print(board.is_fivefold_repetition())
-    print(board.is_seventyfive_moves())
-    print(c)
+    #autoplay(4)
+    print("Welcome to a game of chess versus an AI")
+    color = input("Please choose a color (white or black)\n")
+
+    if color == "white":
+        play(True, 4)
+    elif color == "black":
+        play(False, 4)
+    else:
+        print("Not a real color. Exiting...")
+    #print(board.is_insufficient_material())
+    #print(board.is_stalemate())
+    #print(board.is_fivefold_repetition())
+    #print(board.is_seventyfive_moves())
+    #print(c)
