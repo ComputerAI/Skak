@@ -188,15 +188,14 @@ def ab(depth, player):
     return mov
 
 
-def play(player): #FIXME Outdated
+def play(player,depth): #FIXME Outdated
     E = not player
     while not board.is_game_over():
         if board.turn == player:
-            print(board.unicode())
-            print([str(i) for i in board.legal_moves])
-            print()
-            board.push_san(input("Your move: \n"))
-        else: board.push(ab(3, E))
+            print(board.unicode(invert_color=True, borders=True))
+            print([str(i) for i in board.legal_moves],'\n')
+            board.push_uci(input("Your move: \n"))
+        else: board.push(ab(depth, E))
     
     if not board.is_stalemate():
         if board.turn != player: print(f"Player {player} Wins")
@@ -206,7 +205,7 @@ def play(player): #FIXME Outdated
 def autoplay(depth):
     while not board.is_game_over():
         board.push(ab(depth, board.turn))
-        print(board.unicode(invert_color=True, borders=False, empty_square="⭘"),'\n') #Print the board where white is at the bottom of the board. Forms for empty squares: ⭘, ☐
+        print(board.unicode(invert_color=True, borders=False, empty_square="⭘ "),'\n') #Print the board where white is at the bottom of the board. Forms for empty squares: ⭘, ☐
     if not board.is_stalemate():
         if not board.turn: print("White wins!") #Since the game changes turn after we call board.push() white wins when it's blacks turn and vice versa.
         else: print("Black wins!")
@@ -218,10 +217,18 @@ if __name__ == "__main__":
     board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     #board._set_board_fen("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
-    autoplay(4)
-    
-    print(board.is_insufficient_material())
-    print(board.is_stalemate())
-    print(board.is_fivefold_repetition())
-    print(board.is_seventyfive_moves())
-    print(c)
+    #autoplay(4)
+    print("Welcome to a game of chess versus an AI")
+    color = input("Please choose a color (white or black)\n")
+
+    if color == "white":
+        play(True, 4)
+    elif color == "black":
+        play(False, 4)
+    else:
+        print("Not a real color. Exiting...")
+    #print(board.is_insufficient_material())
+    #print(board.is_stalemate())
+    #print(board.is_fivefold_repetition())
+    #print(board.is_seventyfive_moves())
+    #print(c)
