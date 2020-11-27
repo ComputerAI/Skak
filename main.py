@@ -104,6 +104,9 @@ def score(player,depth):
     
     threatenedPiecesWhite = 0
     threatenedPiecesBlack = 0
+    listOfBlackPawns = []
+    listOfWhitePawns = []
+    
     diffWhite = 0
     diffBlack = 0
     
@@ -112,6 +115,10 @@ def score(player,depth):
     
     for j in range(6):                                            #Go through each piece type
         for i in board.pieces(j+1,True):                        #Your pieces are goooood
+
+            if j == 0:
+                listOfWhitePawns.append(i%8)
+                
             pieceBoard = ListOfScoreBoards[True][j]
             for k in board.attackers(False, i):
                 if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3:
@@ -120,6 +127,10 @@ def score(player,depth):
             diffWhite += pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(True,j,i) #TODO FIX
         
         for i in board.pieces(j+1,False):                        #Your pieces are goooood
+            
+            if j == 0:
+                listOfBlackPawns.append(i%8)
+
             pieceBoard = ListOfScoreBoards[False][j]
             for k in board.attackers(True, i):
                 if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3:
@@ -127,6 +138,12 @@ def score(player,depth):
             
             diffBlack -= pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(False,j,i) #TODO FIX
     
+    if any(listOfWhitePawns.count(element) > 1 for element in listOfWhitePawns): # If list contains dublicates of i%8 
+        diffWhite -= 16
+
+    if any(listOfBlackPawns.count(element) > 1 for element in listOfBlackPawns):
+        diffBlack += 16 # Negative 16 but it is positive because it is black
+
     if threatenedPiecesBlack==1:
         diffBlack -= 10
     elif threatenedPiecesBlack>1:
@@ -237,7 +254,7 @@ def autoplay(depth,time):
 
 
 if __name__ == "__main__":
-    board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    board = chess.Board("r2q1rk1/1pb2pp1/p1n2n1p/2p4P/2N1p1b1/4PN2/PPP1P1P1/1RBQKB1R w K - 0 1")
     #board._set_board_fen("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
     autoplay(20,10)
