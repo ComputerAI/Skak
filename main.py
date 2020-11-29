@@ -61,16 +61,25 @@ def findmove():
         l = [i for i in l if board.is_legal(i)]
     return l
 
-centerManhattanDistance =  [[60,50,40,30,30,40,50,60],
-                            [50,40,30,20,20,30,40,50],
-                            [40,30,20,10,10,20,30,40],
-                            [30,20,10,0,0,10,20,30],
-                            [30,20,10,0,0,10,20,30],
-                            [40,30,20,10,10,20,30,40],
-                            [50,40,30,20,20,30,40,50],
-                            [60,50,40,30,30,40,50,60]]
+centerManhattanDistance =  [[6,5,4,3,3,4,5,6],
+                            [5,4,3,2,2,3,4,5],
+                            [4,3,2,1,1,2,3,4],
+                            [3,2,1,0,0,1,2,3],
+                            [3,2,1,0,0,1,2,3],
+                            [4,3,2,1,1,2,3,4],
+                            [5,4,3,2,2,3,4,5],
+                            [6,5,4,3,3,4,5,6]]
 
-def scoreForPiece(player, piecetype, position): #Takes the number indicating the piece type and the piece location
+#centerDistance =           [[3,3,3,3,3,3,3,3],
+#                            [3,2,2,2,2,2,2,3],
+#                            [3,2,1,1,1,1,2,3],
+#                            [3,2,1,0,0,1,2,3],
+#                            [3,2,1,0,0,1,2,3],
+#                            [3,2,1,1,1,1,2,3],
+#                            [3,2,2,2,2,2,2,3],
+#                            [3,3,3,3,3,3,3,3]]
+
+def scoreForPiece(player, piecetype, position): #Takes the player, number indicating the piece type and the piece location
     pawnRow = [0,0,-1,0,2,14,30,0]
     if player: pawnLine = [-2,-2,1,5,4,3,0,-2]
     else:pawnLine = [-2,0,3,4,5,1,-2,-2]
@@ -81,7 +90,7 @@ def scoreForPiece(player, piecetype, position): #Takes the number indicating the
         2: 2.0*len(board.attacks(position)),
         3: 1.5*len(board.attacks(position)),
         4: 1.0*len(board.attacks(position)),
-        5: centerManhattanDistance[position//8][position%8]
+        5: centerManhattanDistance[position//8][position%8]*5
     }
     return switcher.get(piecetype) #Returns extra score for the given piece
 
@@ -141,14 +150,14 @@ def score(player,depth):
     else:
         diffWhite -= 2
     
-    diff = diffWhite+diffBlack
+    diff = mul*(diffWhite+diffBlack)
     
     #If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
     if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff+=-king
     elif board.is_checkmate():
         if board.turn is player: diff+=-king
         if board.turn is not player: diff+=king
-    return mul*diff
+    return diff
 
 
 def alphabeta(alpha, beta, depth, player):
@@ -190,12 +199,12 @@ def ab(depth, player):
             board.push(val)
             v = alphabeta(a, b, i-1, player)
             board.pop()
-            if a < v:
-                a=v
-                mov=val
             if stop:
                 print(f"depth:{i}",f"value:{a}")
                 return mov
+            if a < v:
+                a=v
+                mov=val
     return mov
 
 def threadded(depth,player,time):
@@ -237,18 +246,18 @@ def autoplay(depth,time):
 
 
 if __name__ == "__main__":
-    board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-    #board._set_board_fen("rnkq1bnr/2p1pN2/p2pN2p/1p5Q/8/4P3/PPPP1PPP/R1B1KB1R")
+    board = chess.Board("r2q1rk1/1pb2pp1/p1n2n1p/2p4P/2N1p1b1/4PN2/PPP2PP1/1RBQKB1R w K - 0 1")
+    #board._set_board_fen("r2q1rk1/1pb2pp1/p1n2n1p/2p4P/2N1p1b1/4PN2/PPP2PP1/1RBQKB1R w K - 0 1")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
-    autoplay(20,10)
-    # print("Welcome to a game of chess versus an AI")
-    # color = input("Please choose a color (white or black)\n")
-    # if color == "white":
-    #     play(True, 20)
-    # elif color == "black":
-    #     play(False, 20)
-    # else:
-    #     print("Not a real color. Exiting...")
+    #autoplay(20,10)
+    print("Welcome to a game of chess versus an AI")
+    color = input("Please choose a color (white or black)\n")
+    if color == "white":
+        play(True, 20,15)
+    elif color == "black":
+        play(False, 20,15)
+    else:
+        print("Not a real color. Exiting...")
     #print(board.is_insufficient_material())
     #print(board.is_stalemate())
     #print(board.is_fivefold_repetition())
