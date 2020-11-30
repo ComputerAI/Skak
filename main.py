@@ -188,7 +188,7 @@ def ab(depth, player):
     poss=findmove()
     if not poss: return -1
     mov=poss[0]
-    for i in range(1,depth+1):
+    for i in range(2,depth+1,2):
         a=-1000000
         b=-a
         board.push(mov)
@@ -246,10 +246,10 @@ def autoplay(depth,time):
 
 
 if __name__ == "__main__":
-    board = chess.Board("r2q1rk1/1pb2pp1/p1n2n1p/2p4P/2N1p1b1/4PN2/PPP2PP1/1RBQKB1R w K - 0 1")
+    board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w K - 0 1")
     #board._set_board_fen("r2q1rk1/1pb2pp1/p1n2n1p/2p4P/2N1p1b1/4PN2/PPP2PP1/1RBQKB1R w K - 0 1")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
-    #autoplay(20,10)
+    #autoplay(20,15)
     print("Welcome to a game of chess versus an AI")
     color = input("Please choose a color (white or black)\n")
     if color == "white":
