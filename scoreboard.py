@@ -52,5 +52,6 @@ def getScoreBoards():
                         [0,0,0,0,0,0,0,0]]
     pawnBoardBlack = pawnBoardWhite[::-1] #Change board values from white to black
     
-    return [[pawnBoardWhite,knightBoardWhite,bishopBoardWhite,rookBoardWhite,queenBoardWhite,kingBoardWhite],
-            [pawnBoardBlack,knightBoardBlack,bishopBoardBlack,rookBoardBlack,queenBoardBlack,kingBoardBlack]]
+    return [[pawnBoardWhite,knightBoardWhite,bishopBoardWhite,rookBoardWhite,queenBoardWhite,kingBoardWhite], #The white pieces need to use the scoreboard for the black pieces and vice versa.
+            [pawnBoardBlack,knightBoardBlack,bishopBoardBlack,rookBoardBlack,queenBoardBlack,kingBoardBlack]] #This is because of the way the chess library's board works.
+            

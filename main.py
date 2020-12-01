@@ -85,7 +85,7 @@ def scoreForPiece(player, piecetype, position): #Takes the player, number indica
     else:pawnLine = [-2,0,3,4,5,1,-2,-2]
     
     switcher = { #Dictionary used like a switch statement
-        0: pawnRow[position//8] + pawnLine[position%8]*((position//8)/2),
+        0: pawnRow[position%8] + pawnLine[position//8]*((position%8)/2),
         1: 3.0*(4 - centerManhattanDistance[position//8][position%8]),
         2: 2.0*len(board.attacks(position)),
         3: 1.5*len(board.attacks(position)),
@@ -98,7 +98,7 @@ def scoreForPiece(player, piecetype, position): #Takes the player, number indica
 c=0
 stop = False
 mov = None
-def score(player,depth):
+def score(player):
     
     global c
     c += 1
@@ -119,37 +119,37 @@ def score(player,depth):
     if player:mul=1 
     else: mul=-1
     
-    for j in range(6):                                            #Go through each piece type
-        for i in board.pieces(j+1,True):                        #Your pieces are goooood
+    for j in range(6): #For every piece type
+        for i in board.pieces(j+1,True): #For every white piece on the board
             pieceBoard = ListOfScoreBoards[True][j]
             for k in board.attackers(False, i):
-                if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3:
+                if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3: #If a minor piece (knight or bishop) attacks current piece
                     threatenedPiecesWhite += 1
             
-            diffWhite += pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(True,j,i) #TODO FIX
+            diffWhite += pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(True,j,i)
         
-        for i in board.pieces(j+1,False):                        #Your pieces are goooood
+        for i in board.pieces(j+1,False): #For every black piece on the board
             pieceBoard = ListOfScoreBoards[False][j]
             for k in board.attackers(True, i):
-                if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3:
+                if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3: #If a minor piece (knight or bishop) attacks current piece
                     threatenedPiecesBlack += 1
             
-            diffBlack -= pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(False,j,i) #TODO FIX
+            diffBlack -= pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(False,j,i)
+    
+    if threatenedPiecesWhite==1:
+        diffWhite -= 10
+    elif threatenedPiecesWhite>1:
+        diffWhite -= 50
+    else:
+        diffWhite += 2
     
     if threatenedPiecesBlack==1:
-        diffBlack -= 10
+        diffBlack += 10
     elif threatenedPiecesBlack>1:
-        diffBlack -= 50
+        diffBlack += 50
     else:
-        diffBlack += 2
+        diffBlack -= 2
         
-    if threatenedPiecesWhite==1:
-        diffWhite += 10
-    elif threatenedPiecesWhite>1:
-        diffWhite += 50
-    else:
-        diffWhite -= 2
-    
     diff = mul*(diffWhite+diffBlack)
     
     #If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
@@ -162,7 +162,7 @@ def score(player,depth):
 
 def alphabeta(alpha, beta, depth, player):
     global stop
-    if depth <= 0 or board.is_game_over() or stop: return score(player, depth)
+    if depth <= 0 or board.is_game_over() or stop: return score(player)
     if board.turn == player:
         a=alpha
         for val in findmove():
@@ -220,7 +220,7 @@ def threadded(depth,player,time):
     stop=False
     return mov
 
-def play(player,depth,time): #FIXME Outdated
+def play(player,depth,time):
     E = not player
     while not board.is_game_over():
         if board.turn == player:
@@ -249,7 +249,7 @@ if __name__ == "__main__":
     board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w K - 0 1")
     #board._set_board_fen("r2q1rk1/1pb2pp1/p1n2n1p/2p4P/2N1p1b1/4PN2/PPP2PP1/1RBQKB1R w K - 0 1")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
-    #autoplay(20,15)
+    #autoplay(20,10)
     print("Welcome to a game of chess versus an AI")
     color = input("Please choose a color (white or black)\n")
     if color == "white":
