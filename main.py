@@ -205,6 +205,7 @@ def ab(depth, player):
             if a < v:
                 a=v
                 mov=val
+    print(mov)
     return mov
 
 def threadded(depth,player,time):
@@ -226,12 +227,23 @@ def play(player,depth,time):
         if board.turn == player:
             print(board.unicode(invert_color=True, borders=True))
             print([str(i) for i in board.legal_moves],'\n')
-            board.push_uci(input("Your move: \n"))
+            
+            inCorrect = True
+            while (inCorrect):
+                move = input("Your move: \n")
+                for i in board.legal_moves:
+                    if str(move) == str(i):
+                        board.push_uci(move)
+                        inCorrect = False
+                        break
+                if inCorrect:
+                    print("Invalid move try again.")
+            
         else: board.push(threadded(depth, E, time))
-    
+    print(board.unicode(invert_color=True, borders=True))
     if not board.is_stalemate():
-        if board.turn != player: print(f"Player {player} Wins")
-        else: print(f"Player {E} Wins")
+        if not board.turn: print("White wins!") #Since the game changes turn after we call board.push() white wins when it's blacks turn and vice versa.
+        else: print("Black wins!")
     else: print("It was a tie")
 
 def autoplay(depth,time):
@@ -246,16 +258,16 @@ def autoplay(depth,time):
 
 
 if __name__ == "__main__":
-    board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w K - 0 1")
+    board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR KQkq - 0 1")
     #board._set_board_fen("r2q1rk1/1pb2pp1/p1n2n1p/2p4P/2N1p1b1/4PN2/PPP2PP1/1RBQKB1R w K - 0 1")
     #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
     #autoplay(20,10)
     print("Welcome to a game of chess versus an AI")
     color = input("Please choose a color (white or black)\n")
     if color == "white":
-        play(True, 20,15)
+        play(True, 25,29)
     elif color == "black":
-        play(False, 20,15)
+        play(False, 25,29)
     else:
         print("Not a real color. Exiting...")
     #print(board.is_insufficient_material())
