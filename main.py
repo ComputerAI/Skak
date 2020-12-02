@@ -128,7 +128,7 @@ def score(player, depth):
     # If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
     if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff+=-king
     elif board.is_checkmate():
-        if board.turn is     player: diff+=-king
+        if board.turn is     player: diff+=-king-depth*king
         if board.turn is not player: diff+=king+depth*king
     return diff
 
