@@ -6,7 +6,6 @@ pip install PyQt5
 """
 
 import chess
-import time
 import scoreboard
 from collections import OrderedDict
 import threading
@@ -42,21 +41,12 @@ def findmove():
     else: moves = [chess.Move(pawn,pawn-8,5) for pawn in ours[0] if pawn <8*2]
     l.extend([m for m in moves if board.is_legal(m)])
 
-    # if len([item for sublist in ours for item in sublist])<8:
-    # if board.turn: moves = [chess.Move(pawn,pawn+8) for pawn in ours[0]]
-    # else: moves = [chess.Move(pawn,pawn-8) for pawn in ours[0]]
-    # l.extend([m for m in moves if board.is_legal(m)])
-    
-    # Castling        X
-    # for pie in ours[3]:#Rook = 4 for 1 indexed array
-    #     if(board.castling_rights & pie): print("castling",pie, [o for o in ours[5]][0])
-    #'''
     # All other moves ✓
     ll = list(board.legal_moves)
     l.extend(ll)
     l = list(OrderedDict.fromkeys(l))
-    # En passant      X (Alredy in "capture if possible")
-    if len(l) is not len(ll): 
+
+    if len(l) is not len(ll): # Checks if list has illegal moves
         print("Illigal move detected",len(ll),len(l))
         l = [i for i in l if board.is_legal(i)]
     return l
@@ -79,12 +69,12 @@ centerManhattanDistance =  [[6,5,4,3,3,4,5,6],
 #                            [3,2,2,2,2,2,2,3],
 #                            [3,3,3,3,3,3,3,3]]
 
-def scoreForPiece(player, piecetype, position): #Takes the player, number indicating the piece type and the piece location
+def scoreForPiece(player, piecetype, position): # Takes the player, number indicating the piece type and the piece location
     pawnRow = [0,0,-1,0,2,14,30,0]
     if player: pawnLine = [-2,-2,1,5,4,3,0,-2]
     else:pawnLine = [-2,0,3,4,5,1,-2,-2]
     
-    switcher = { #Dictionary used like a switch statement
+    switcher = { # Dictionary used like a switch statement
         0: pawnRow[position%8] + pawnLine[position//8]*((position%8)/2),
         1: 3.0*(4 - centerManhattanDistance[position//8][position%8]),
         2: 2.0*len(board.attacks(position)),
@@ -92,7 +82,7 @@ def scoreForPiece(player, piecetype, position): #Takes the player, number indica
         4: 1.0*len(board.attacks(position)),
         5: centerManhattanDistance[position//8][position%8]*5
     }
-    return switcher.get(piecetype) #Returns extra score for the given piece
+    return switcher.get(piecetype) # Returns extra score for the given piece
 
 
 c=0
@@ -118,41 +108,37 @@ def score(player):
     
     if player:mul=1 
     else: mul=-1
+	
+    currentPlayer = player
+    currentDiff = [0,0] # Current score for white (first element) and black (second element).
+    threatenedPieces = [0,0] # Threatened pieces score for white (first element) and black (second element).
+	
+    for l in range(2): 
+        for j in range(6): # For every piece type
+            for i in board.pieces(j+1,currentPlayer): # For every current players piece on the board
+                pieceBoard = ListOfScoreBoards[currentPlayer][j]
+                for k in board.attackers(not currentPlayer, i):
+                    if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3: # If a minor piece (knight or bishop) attacks current piece
+                        threatenedPieces[currentPlayer] += 1
+
+                if currentPlayer == True: currentDiff[currentPlayer] += pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(currentPlayer,j,i)
+                else: currentDiff[currentPlayer] -= pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(currentPlayer,j,i)
+
+        if threatenedPieces[currentPlayer] == 1:
+            if currentPlayer == True: currentDiff[currentPlayer] -= 10
+            else: currentDiff[currentPlayer] += 10
+        elif threatenedPieces[currentPlayer] > 1:
+            if currentPlayer == True: currentDiff[currentPlayer] -= 50
+            else: currentDiff[currentPlayer] += 50
+        else:
+            if currentPlayer == True: currentDiff[currentPlayer] += 2
+            else: currentDiff[currentPlayer] -= 2
+
+        currentPlayer = not player
+
+    diff = mul*(currentDiff[0]+currentDiff[1])
     
-    for j in range(6): #For every piece type
-        for i in board.pieces(j+1,True): #For every white piece on the board
-            pieceBoard = ListOfScoreBoards[True][j]
-            for k in board.attackers(False, i):
-                if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3: #If a minor piece (knight or bishop) attacks current piece
-                    threatenedPiecesWhite += 1
-            
-            diffWhite += pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(True,j,i)
-        
-        for i in board.pieces(j+1,False): #For every black piece on the board
-            pieceBoard = ListOfScoreBoards[False][j]
-            for k in board.attackers(True, i):
-                if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3: #If a minor piece (knight or bishop) attacks current piece
-                    threatenedPiecesBlack += 1
-            
-            diffBlack -= pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(False,j,i)
-    
-    if threatenedPiecesWhite==1:
-        diffWhite -= 10
-    elif threatenedPiecesWhite>1:
-        diffWhite -= 50
-    else:
-        diffWhite += 2
-    
-    if threatenedPiecesBlack==1:
-        diffBlack += 10
-    elif threatenedPiecesBlack>1:
-        diffBlack += 50
-    else:
-        diffBlack -= 2
-        
-    diff = mul*(diffWhite+diffBlack)
-    
-    #If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
+    # If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
     if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff+=-king
     elif board.is_checkmate():
         if board.turn is player: diff+=-king
@@ -242,26 +228,27 @@ def play(player,depth,time):
         else: board.push(threadded(depth, E, time))
     print(board.unicode(invert_color=True, borders=True))
     if not board.is_stalemate():
-        if not board.turn: print("White wins!") #Since the game changes turn after we call board.push() white wins when it's blacks turn and vice versa.
+        if not board.turn: print("White wins!") # Since the game changes turn after we call board.push() white wins when it's blacks turn and vice versa.
         else: print("Black wins!")
     else: print("It was a tie")
 
 def autoplay(depth,time):
     while not board.is_game_over():
         board.push(threadded(depth, board.turn,time))
-        print(board.unicode(invert_color=True, borders=False, empty_square="⭘"),'\n') #Print the board where white is at the bottom of the board. Forms for empty squares: ⭘, ☐
+        print(board.unicode(invert_color=True, borders=False, empty_square="⭘"),'\n') # Print the board where white is at the bottom of the board. Forms for empty squares: ⭘, ☐
     if not board.is_stalemate():
-        if not board.turn: print("White wins!") #Since the game changes turn after we call board.push() white wins when it's blacks turn and vice versa.
+        if not board.turn: print("White wins!") # Since the game changes turn after we call board.push() white wins when it's blacks turn and vice versa.
         else: print("Black wins!")
     else: print("It was a tie")
 
 
 
 if __name__ == "__main__":
-    board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR KQkq - 0 1")
-    #board._set_board_fen("r2q1rk1/1pb2pp1/p1n2n1p/2p4P/2N1p1b1/4PN2/PPP2PP1/1RBQKB1R w K - 0 1")
-    #board._set_board_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+    board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    
+    # If you want to test with AI vs AI uncomment next line and comment the code following
     #autoplay(20,10)
+
     print("Welcome to a game of chess versus an AI")
     color = input("Please choose a color (white or black)\n")
     if color == "white":
@@ -270,8 +257,3 @@ if __name__ == "__main__":
         play(False, 25,29)
     else:
         print("Not a real color. Exiting...")
-    #print(board.is_insufficient_material())
-    #print(board.is_stalemate())
-    #print(board.is_fivefold_repetition())
-    #print(board.is_seventyfive_moves())
-    #print(c)
