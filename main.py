@@ -247,7 +247,7 @@ if __name__ == "__main__":
     board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     
     # If you want to test with AI vs AI uncomment next line and comment the code following
-    #autoplay(20,10)
+    autoplay(20,10)
 
     print("Welcome to a game of chess versus an AI")
     color = input("Please choose a color (white or black)\n")
