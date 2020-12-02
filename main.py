@@ -10,6 +10,7 @@ import scoreboard
 from collections import OrderedDict
 import threading
 
+stop = False
 ListOfScoreBoards = scoreboard.getScoreBoards() # Get scoreboards for black and white pieces
 
 def findmove(): 
@@ -85,13 +86,7 @@ def scoreForPiece(player, piecetype, position): # Takes the player, number indic
     return switcher.get(piecetype) # Returns extra score for the given piece
 
 
-c=0
-stop = False
-mov = None
-def score(player):
-    
-    global c
-    c += 1
+def score(player, depth):
                         #piecetype
     pawn = 100          #1
     knight = 305        #2
@@ -100,17 +95,9 @@ def score(player):
     queen = 950         #5
     king = 20000        #6
     pieceScore = [pawn,knight,bishop,rook,queen,king]
-    
-    threatenedPiecesWhite = 0
-    threatenedPiecesBlack = 0
-    diffWhite = 0
-    diffBlack = 0
-    
-    if player:mul=1 
-    else: mul=-1
 	
     currentPlayer = player
-    currentDiff = [0,0] # Current score for white (first element) and black (second element).
+    currentDiff =      [0,0] # Current score for white (first element) and black (second element).
     threatenedPieces = [0,0] # Threatened pieces score for white (first element) and black (second element).
 	
     for l in range(2): 
@@ -118,37 +105,37 @@ def score(player):
             for i in board.pieces(j+1,currentPlayer): # For every current players piece on the board
                 pieceBoard = ListOfScoreBoards[currentPlayer][j]
                 for k in board.attackers(not currentPlayer, i):
-                    if board.piece_at(k).piece_type == 2 or board.piece_at(k).piece_type == 3: # If a minor piece (knight or bishop) attacks current piece
+                    if board.piece_at(k).piece_type < board.piece_at(i).piece_type: # If a minor piece attacks the current piece
                         threatenedPieces[currentPlayer] += 1
 
-                if currentPlayer == True: currentDiff[currentPlayer] += pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(currentPlayer,j,i)
-                else: currentDiff[currentPlayer] -= pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(currentPlayer,j,i)
+                if currentPlayer:currentDiff[currentPlayer] += pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(currentPlayer,j,i)
+                else:            currentDiff[currentPlayer] -= pieceBoard[i//8][i%8]+pieceScore[j]+scoreForPiece(currentPlayer,j,i)
 
-        if threatenedPieces[currentPlayer] == 1:
-            if currentPlayer == True: currentDiff[currentPlayer] -= 10
-            else: currentDiff[currentPlayer] += 10
+        if   threatenedPieces[currentPlayer] == 1:
+            if    currentPlayer: currentDiff[currentPlayer] -= 10
+            else:                currentDiff[currentPlayer] += 10
         elif threatenedPieces[currentPlayer] > 1:
-            if currentPlayer == True: currentDiff[currentPlayer] -= 50
-            else: currentDiff[currentPlayer] += 50
+            if    currentPlayer: currentDiff[currentPlayer] -= 50
+            else:                currentDiff[currentPlayer] += 50
         else:
-            if currentPlayer == True: currentDiff[currentPlayer] += 2
+            if    currentPlayer: currentDiff[currentPlayer] += 2
             else: currentDiff[currentPlayer] -= 2
 
-        currentPlayer = not player
-
-    diff = mul*(currentDiff[0]+currentDiff[1])
+        currentPlayer = not player # We have done the calculations for one player, now we have to do it for the other so we can compare
+    if player: diff =   currentDiff[0]+currentDiff[1]
+    else:      diff = -(currentDiff[0]+currentDiff[1])
     
     # If game is over and you didn't win, it's bad for else you will commit suicide. Winning is good.
     if board.is_fivefold_repetition() or board.is_seventyfive_moves() or board.is_stalemate(): diff+=-king
     elif board.is_checkmate():
-        if board.turn is player: diff+=-king
-        if board.turn is not player: diff+=king
+        if board.turn is     player: diff+=-king
+        if board.turn is not player: diff+=king+depth*king
     return diff
 
 
 def alphabeta(alpha, beta, depth, player):
     global stop
-    if depth <= 0 or board.is_game_over() or stop: return score(player)
+    if depth <= 0 or board.is_game_over() or stop: return score(player, depth)
     if board.turn == player:
         a=alpha
         for val in findmove():
@@ -191,7 +178,6 @@ def ab(depth, player):
             if a < v:
                 a=v
                 mov=val
-    print(mov)
     return mov
 
 def threadded(depth,player,time):
@@ -247,8 +233,8 @@ if __name__ == "__main__":
     board = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     
     # If you want to test with AI vs AI uncomment next line and comment the code following
-    autoplay(20,10)
-
+    #autoplay(20,10)
+    
     print("Welcome to a game of chess versus an AI")
     color = input("Please choose a color (white or black)\n")
     if color == "white":
